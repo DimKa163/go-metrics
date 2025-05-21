@@ -53,6 +53,9 @@ func update(w http.ResponseWriter, r *http.Request) {
 		}
 		updateCounter(name, i)
 		break
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Add("Content-Length", "0")
