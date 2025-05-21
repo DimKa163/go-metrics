@@ -44,7 +44,6 @@ func update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		updateGauge(name, i)
-		break
 	case "counter":
 		i, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
@@ -52,7 +51,6 @@ func update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		updateCounter(name, i)
-		break
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		return
