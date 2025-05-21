@@ -1,15 +1,16 @@
 package main
 
 import (
+	"github.com/DimKa163/go-metrics/internal/persistence"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-var memStorage MemStorage
+var memStorage persistence.MemStorage
 
 func init() {
-	memStorage = MemStorage{
+	memStorage = persistence.MemStorage{
 		Gauge:   make(map[string]float64),
 		Counter: make(map[string]int64),
 	}

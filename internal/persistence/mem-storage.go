@@ -1,4 +1,4 @@
-package main
+package persistence
 
 type MemStorage struct {
 	Gauge   map[string]float64
