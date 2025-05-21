@@ -1,20 +1,12 @@
 package main
 
 import (
-	"github.com/DimKa163/go-metrics/internal/persistence"
+	"errors"
+	"github.com/DimKa163/go-metrics/internal/handlers"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
-var memStorage persistence.MemStorage
-
-func init() {
-	memStorage = persistence.MemStorage{
-		Gauge:   make(map[string]float64),
-		Counter: make(map[string]int64),
-	}
-}
 func main() {
 	err := run()
 	if err != nil {
@@ -37,38 +29,20 @@ func update(w http.ResponseWriter, r *http.Request) {
 	t := segments[0]
 	name := segments[1]
 	value := segments[2]
-	switch t {
-	case "gauge":
-		i, err := strconv.ParseFloat(value, 64)
-		if err != nil {
+	err := handlers.Update(t, name, value)
+	if err != nil {
+		if errors.Is(err, handlers.BadRequestError) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		updateGauge(name, i)
-	case "counter":
-		i, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+		if errors.Is(err, handlers.TypeNotFoundError) {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		updateCounter(name, i)
-	default:
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Add("Content-Length", "0")
 	w.WriteHeader(http.StatusOK)
-}
-
-func updateGauge(name string, value float64) {
-	memStorage.Gauge[name] = value
-}
-
-func updateCounter(name string, value int64) {
-	if val, ok := memStorage.Counter[name]; ok {
-		memStorage.Counter[name] = val + value
-	} else {
-		memStorage.Counter[name] = value
-	}
 }
