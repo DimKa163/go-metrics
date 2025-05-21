@@ -31,11 +31,11 @@ func update(w http.ResponseWriter, r *http.Request) {
 	value := segments[2]
 	err := handlers.Update(t, name, value)
 	if err != nil {
-		if errors.Is(err, handlers.BadRequestError) {
+		if errors.Is(err, handlers.BadRequestErr) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		if errors.Is(err, handlers.TypeNotFoundError) {
+		if errors.Is(err, handlers.TypeNotFoundErr) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

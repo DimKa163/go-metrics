@@ -6,26 +6,26 @@ import (
 	"strconv"
 )
 
-var BadRequestError = errors.New("value is not a number")
+var BadRequestErr = errors.New("value is not a number")
 
-var TypeNotFoundError = errors.New("type not found")
+var TypeNotFoundErr = errors.New("type not found")
 
 func Update(t string, name string, value string) error {
 	switch t {
 	case "gauge":
 		i, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return BadRequestError
+			return BadRequestErr
 		}
 		updateGauge(name, i)
 	case "counter":
 		i, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return BadRequestError
+			return BadRequestErr
 		}
 		updateCounter(name, i)
 	default:
-		return TypeNotFoundError
+		return BadRequestErr
 	}
 	return nil
 }
