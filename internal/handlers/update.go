@@ -1,43 +1,58 @@
 package handlers
 
 import (
-	"errors"
 	"github.com/DimKa163/go-metrics/internal/persistence"
+	"net/http"
 	"strconv"
+	"strings"
 )
 
-var ErrBadRequest = errors.New("value is not a number")
+const (
+	GaugeType   = "gauge"
+	CounterType = "counter"
+)
 
-var ErrTypeNotFound = errors.New("type not found")
+type UpdateHandler interface {
+	Update(w http.ResponseWriter, r *http.Request)
+}
 
-func Update(t string, name string, value string) error {
-	switch t {
-	case "gauge":
-		i, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return ErrBadRequest
-		}
-		updateGauge(name, i)
-	case "counter":
-		i, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return ErrBadRequest
-		}
-		updateCounter(name, i)
-	default:
-		return ErrBadRequest
+type updateHandler struct {
+	gaugeRepository   persistence.GaugeRepository
+	counterRepository persistence.CounterRepository
+}
+
+func NewUpdateHandler(gaugeRepository persistence.GaugeRepository, counterRepository persistence.CounterRepository) UpdateHandler {
+	return &updateHandler{
+		gaugeRepository:   gaugeRepository,
+		counterRepository: counterRepository,
 	}
-	return nil
 }
 
-func updateGauge(name string, value float64) {
-	persistence.Store.Gauge[name] = value
-}
-
-func updateCounter(name string, value int64) {
-	if val, ok := persistence.Store.Counter[name]; ok {
-		persistence.Store.Counter[name] = val + value
-	} else {
-		persistence.Store.Counter[name] = value
+func (h *updateHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	segments := strings.Split(r.URL.Path, "/")[2:]
+	t := segments[0]
+	switch t {
+	case GaugeType:
+		name := segments[1]
+		value, err := strconv.ParseFloat(segments[2], 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.gaugeRepository.Update(name, value)
+	case CounterType:
+		name := segments[1]
+		value, err := strconv.ParseInt(segments[2], 10, 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.counterRepository.Increment(name, value)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }
