@@ -55,7 +55,6 @@ func report(cl client.MetricClient, memStats *runtime.MemStats, count int64) {
 }
 
 func execute[T float64 | int64](handler func(name string, value T) error, name string, value T) {
-	fmt.Printf("report name: %s, value: %f\n", name, value)
 	err := handler(name, value)
 	if err != nil {
 		fmt.Println(err)

@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -37,12 +36,7 @@ func (client *metricClient) UpdateGauge(name string, value float64) error {
 	if err != nil {
 		return err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(res.Body)
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
@@ -61,12 +55,7 @@ func (client *metricClient) UpdateCounter(name string, value int64) error {
 	if err != nil {
 		return err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(res.Body)
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
