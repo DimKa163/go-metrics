@@ -1,58 +1,39 @@
 package handlers
 
 import (
+	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/persistence"
+	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
-const (
-	GaugeType   = "gauge"
-	CounterType = "counter"
-)
-
-type UpdateHandler interface {
-	Update(w http.ResponseWriter, r *http.Request)
-}
-
-type updateHandler struct {
-	gaugeRepository   persistence.GaugeRepository
-	counterRepository persistence.CounterRepository
-}
-
-func NewUpdateHandler(gaugeRepository persistence.GaugeRepository, counterRepository persistence.CounterRepository) UpdateHandler {
-	return &updateHandler{
-		gaugeRepository:   gaugeRepository,
-		counterRepository: counterRepository,
-	}
-}
-
-func (h *updateHandler) Update(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	segments := strings.Split(r.URL.Path, "/")[2:]
-	t := segments[0]
-	switch t {
-	case GaugeType:
-		name := segments[1]
-		value, err := strconv.ParseFloat(segments[2], 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+func Update(repository persistence.Repository) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		t := c.Param("type")
+		name := c.Param("name")
+		var metric *models.Metric
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		metric = repository.Find(models.MetricType(t), name)
+		if metric == nil {
+			var err error
+			if metric, err = models.CreateMetric(t, name, c.Param("value")); err != nil {
+				c.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			err = repository.Create(metric)
+			if err != nil {
+				c.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			c.Writer.WriteHeader(http.StatusOK)
 			return
+		} else {
+			err := models.Update(metric, c.Param("value"))
+			if err != nil {
+				c.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
-		h.gaugeRepository.Update(name, value)
-	case CounterType:
-		name := segments[1]
-		value, err := strconv.ParseInt(segments[2], 10, 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		h.counterRepository.Increment(name, value)
-	default:
-		w.WriteHeader(http.StatusBadRequest)
+		c.Writer.WriteHeader(http.StatusOK)
 	}
 }
