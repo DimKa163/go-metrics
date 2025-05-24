@@ -10,15 +10,17 @@ import (
 func main() {
 	parseFlags()
 	count := int64(0)
+	interval := reportInterval
 	seconds := 0
-	cl := client.NemClient(addr)
+	cl := client.NemClient(fmt.Sprintf("http://%s", addr))
 	for {
 		memStats := &runtime.MemStats{}
 
 		runtime.ReadMemStats(memStats)
 
-		if seconds%pollInterval == 0 {
+		if seconds >= interval {
 			report(cl, memStats, count)
+			interval += reportInterval
 		}
 
 		time.Sleep(time.Duration(pollInterval) * time.Second)
