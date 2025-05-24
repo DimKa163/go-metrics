@@ -26,7 +26,7 @@ func NemClient(addr string) MetricClient {
 }
 
 func (client *metricClient) UpdateGauge(name string, value float64) error {
-	fullAddr := fmt.Sprintf("%supdate/%s/%s/%f", client.addr, GaugeType, name, value)
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%f", client.addr, GaugeType, name, value)
 	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func (client *metricClient) UpdateGauge(name string, value float64) error {
 }
 
 func (client *metricClient) UpdateCounter(name string, value int64) error {
-	fullAddr := fmt.Sprintf("%supdate/%s/%s/%d", client.addr, CounterType, name, value)
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%d", client.addr, CounterType, name, value)
 	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
