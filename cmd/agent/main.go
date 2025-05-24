@@ -8,19 +8,22 @@ import (
 )
 
 func main() {
+	parseFlags()
 	count := int64(0)
-	cl := client.NemClient("http://localhost:8080/")
+	seconds := 0
+	cl := client.NemClient(addr)
 	for {
 		memStats := &runtime.MemStats{}
 
 		runtime.ReadMemStats(memStats)
 
-		if count%5 == 0 {
+		if seconds%pollInterval == 0 {
 			report(cl, memStats, count)
 		}
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Duration(pollInterval) * time.Second)
 		count++
+		seconds += pollInterval
 	}
 }
 

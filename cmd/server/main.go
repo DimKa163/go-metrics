@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	parseFlag()
 	err := run()
 	if err != nil {
 		panic(err)
@@ -20,7 +21,7 @@ func run() error {
 	router.GET("/", handlers.HomeHandler(store))
 	router.GET("/value/:type/:name", handlers.GetHandler(store))
 	router.POST("/update/:type/:name/:value", handlers.Update(store))
-	return router.Run(":8080")
+	return router.Run(addr)
 }
 
 func setup() *gin.Engine {
