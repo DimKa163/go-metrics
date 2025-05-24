@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/DimKa163/go-metrics/internal/handlers"
 	"github.com/DimKa163/go-metrics/internal/persistence"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -14,10 +14,16 @@ func main() {
 }
 
 func run() error {
-	mux := http.NewServeMux()
-	gRep := persistence.NewGaugeRepository()
-	cRep := persistence.NewCounterRepository()
-	updateHandler := handlers.NewUpdateHandler(gRep, cRep)
-	mux.HandleFunc("/update/{type}/{name}/{value}", updateHandler.Update)
-	return http.ListenAndServe(`:8080`, mux)
+	router := setup()
+	router.LoadHTMLFiles("views/home.tmpl")
+	store := persistence.NewMemStorage()
+	router.GET("/", handlers.HomeHandler(store))
+	router.GET("/value/:type/:name", handlers.GetHandler(store))
+	router.POST("/update/:type/:name/:value", handlers.Update(store))
+	return router.Run(":8080")
+}
+
+func setup() *gin.Engine {
+	router := gin.Default()
+	return router
 }
