@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"strconv"
 )
@@ -17,43 +16,29 @@ func parseFlags() {
 	flag.IntVar(&pollInterval, "p", 2, "poll interval in seconds")
 	flag.Parse()
 
-	parseAddress(&addr)
-
-	parseReportInterval(&reportInterval)
-
-	parsePollInterval(&pollInterval)
-}
-
-func parseAddress(addr *string) {
-	if envAddr := os.Getenv("Addr"); envAddr != "" {
-		addr = &envAddr
+	if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
+		addr = envAddress
 	}
-}
 
-func parseReportInterval(reportInterval *int) {
-	if envReportInterval := os.Getenv("ReportInterval"); envReportInterval != "" {
+	if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
 		var (
 			value int
 			err   error
 		)
-		if value, err = strconv.Atoi(envReportInterval); err != nil {
-			fmt.Println(err)
-			return
+		if value, err = strconv.Atoi(envReportInterval); err == nil {
+			reportInterval = value
 		}
-		reportInterval = &value
-	}
-}
 
-func parsePollInterval(pollInterval *int) {
-	if envReportInterval := os.Getenv("PollInterval"); envReportInterval != "" {
+	}
+
+	if envPollInterval := os.Getenv("POLL_INTERVAL"); envPollInterval != "" {
 		var (
 			value int
 			err   error
 		)
-		if value, err = strconv.Atoi(envReportInterval); err != nil {
-			fmt.Println(err)
-			return
+		if value, err = strconv.Atoi(envPollInterval); err == nil {
+			pollInterval = value
 		}
-		pollInterval = &value
+
 	}
 }
