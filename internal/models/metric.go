@@ -15,7 +15,9 @@ var ErrUnknownMetricType = errors.New("unknown metric type")
 type Gauge float64
 
 type Counter int64
+
 type MetricType string
+
 type Metric struct {
 	Name  string     `json:"name"`
 	Type  MetricType `json:"type"`

@@ -2,8 +2,7 @@ package main
 
 import (
 	"flag"
-	"os"
-	"strconv"
+	"github.com/DimKa163/go-metrics/internal/common"
 )
 
 var addr string
@@ -16,29 +15,9 @@ func parseFlags() {
 	flag.IntVar(&pollInterval, "p", 2, "poll interval in seconds")
 	flag.Parse()
 
-	if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
-		addr = envAddress
-	}
+	common.ParseStringEnv("ADDRESS", &addr)
 
-	if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
-		var (
-			value int
-			err   error
-		)
-		if value, err = strconv.Atoi(envReportInterval); err == nil {
-			reportInterval = value
-		}
+	common.ParseIntEnv("REPORT_INTERVAL", &reportInterval)
 
-	}
-
-	if envPollInterval := os.Getenv("POLL_INTERVAL"); envPollInterval != "" {
-		var (
-			value int
-			err   error
-		)
-		if value, err = strconv.Atoi(envPollInterval); err == nil {
-			pollInterval = value
-		}
-
-	}
+	common.ParseIntEnv("POLL_INTERVAL", &pollInterval)
 }

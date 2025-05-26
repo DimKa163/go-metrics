@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"os"
+	"github.com/DimKa163/go-metrics/internal/common"
 )
 
 var addr string
@@ -11,7 +11,5 @@ func parseFlag() {
 	flag.StringVar(&addr, "a", ":8080", "server address")
 	flag.Parse()
 
-	if envAddr := os.Getenv("ADDRESS"); envAddr != "" {
-		addr = envAddr
-	}
+	common.ParseStringEnv("ADDRESS", &addr)
 }
