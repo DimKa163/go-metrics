@@ -16,23 +16,24 @@ type MetricClient interface {
 }
 
 type metricClient struct {
-	addr string
+	client http.Client
+	addr   string
 }
 
 func NemClient(addr string) MetricClient {
 	return &metricClient{
-		addr: addr,
+		client: http.Client{},
+		addr:   addr,
 	}
 }
 
-func (client *metricClient) UpdateGauge(name string, value float64) error {
-	fullAddr := fmt.Sprintf("%s/update/%s/%s/%f", client.addr, GaugeType, name, value)
+func (api *metricClient) UpdateGauge(name string, value float64) error {
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%f", api.addr, GaugeType, name, value)
 	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
 	}
-	httpClient := &http.Client{}
-	res, err := httpClient.Do(req)
+	res, err := api.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -43,15 +44,14 @@ func (client *metricClient) UpdateGauge(name string, value float64) error {
 	return nil
 }
 
-func (client *metricClient) UpdateCounter(name string, value int64) error {
-	fullAddr := fmt.Sprintf("%s/update/%s/%s/%d", client.addr, CounterType, name, value)
+func (api *metricClient) UpdateCounter(name string, value int64) error {
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%d", api.addr, CounterType, name, value)
 	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "text/plain")
-	httpClient := &http.Client{}
-	res, err := httpClient.Do(req)
+	res, err := api.client.Do(req)
 	if err != nil {
 		return err
 	}
