@@ -12,7 +12,7 @@ func main() {
 	count := int64(0)
 	interval := reportInterval
 	seconds := 0
-	cl := client.NemClient(fmt.Sprintf("http://%s", addr))
+	cl := client.NewClient(fmt.Sprintf("http://%s", addr))
 	for {
 		memStats := &runtime.MemStats{}
 

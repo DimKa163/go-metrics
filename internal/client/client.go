@@ -2,12 +2,9 @@ package client
 
 import (
 	"fmt"
+	"github.com/DimKa163/go-metrics/internal/models"
 	"net/http"
-)
-
-const (
-	GaugeType   = "gauge"
-	CounterType = "counter"
+	"time"
 )
 
 type MetricClient interface {
@@ -16,23 +13,26 @@ type MetricClient interface {
 }
 
 type metricClient struct {
-	addr string
+	client http.Client
+	addr   string
 }
 
-func NemClient(addr string) MetricClient {
+func NewClient(addr string) MetricClient {
 	return &metricClient{
+		client: http.Client{
+			Timeout: 30 * time.Second,
+		},
 		addr: addr,
 	}
 }
 
-func (client *metricClient) UpdateGauge(name string, value float64) error {
-	fullAddr := fmt.Sprintf("%s/update/%s/%s/%f", client.addr, GaugeType, name, value)
+func (c *metricClient) UpdateGauge(name string, value float64) error {
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%f", c.addr, models.GaugeType, name, value)
 	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
 	}
-	httpClient := &http.Client{}
-	res, err := httpClient.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -43,15 +43,14 @@ func (client *metricClient) UpdateGauge(name string, value float64) error {
 	return nil
 }
 
-func (client *metricClient) UpdateCounter(name string, value int64) error {
-	fullAddr := fmt.Sprintf("%s/update/%s/%s/%d", client.addr, CounterType, name, value)
+func (c *metricClient) UpdateCounter(name string, value int64) error {
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%d", c.addr, models.CounterType, name, value)
 	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "text/plain")
-	httpClient := &http.Client{}
-	res, err := httpClient.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
