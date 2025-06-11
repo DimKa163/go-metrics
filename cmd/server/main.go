@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/DimKa163/go-metrics/internal/handlers"
 	"github.com/DimKa163/go-metrics/internal/logging"
+	"github.com/DimKa163/go-metrics/internal/middleware"
 	"github.com/DimKa163/go-metrics/internal/persistence"
-	"github.com/DimKa163/go-metrics/middleware"
 	"github.com/gin-gonic/gin"
 )
 
