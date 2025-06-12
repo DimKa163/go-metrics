@@ -9,31 +9,28 @@ import (
 
 func Update(repository persistence.Repository) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		t := c.Param("type")
-		name := c.Param("name")
-		var metric *models.Metric
-		c.Writer.Header().Set("Content-Type", "text/plain")
-		metric = repository.Find(models.MetricType(t), name)
-		if metric == nil {
-			var err error
-			if metric, err = models.CreateMetric(t, name, c.Param("value")); err != nil {
-				c.Writer.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			err = repository.Create(metric)
-			if err != nil {
-				c.Writer.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			c.Writer.WriteHeader(http.StatusOK)
+		var metric models.Metric
+		if err := c.ShouldBindJSON(&metric); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
-		} else {
-			err := models.Update(metric, c.Param("value"))
+		}
+		if err := models.ValidateMetric(&metric); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.Writer.Header().Set("Content-Type", "application/json")
+		existingMetric := repository.Find(metric.Type, metric.ID)
+		if existingMetric == nil {
+			existingMetric = &metric
+			err := repository.Create(existingMetric)
 			if err != nil {
 				c.Writer.WriteHeader(http.StatusBadRequest)
 				return
 			}
+		} else {
+			existingMetric.Value = metric.Value
+			existingMetric.Delta = metric.Delta
 		}
-		c.Writer.WriteHeader(http.StatusOK)
+		c.JSON(http.StatusOK, existingMetric)
 	}
 }

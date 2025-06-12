@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"strconv"
 )
 
 const (
@@ -19,60 +18,38 @@ type Counter int64
 type MetricType string
 
 type Metric struct {
-	Name  string     `json:"name"`
+	ID    string     `json:"id"`
 	Type  MetricType `json:"type"`
-	Value any        `json:"value"`
+	Delta *int64     `json:"delta,omitempty"`
+	Value *float64   `json:"value,omitempty"`
 }
 
-func CreateMetric(tt string, name string, value string) (*Metric, error) {
-	if tt != GaugeType && tt != CounterType {
-		return nil, ErrUnknownMetricType
+func ValidateMetric(model *Metric) error {
+	if model.Type != GaugeType && model.Type != CounterType {
+		return ErrUnknownMetricType
 	}
-	switch tt {
+	switch model.Type {
 	case GaugeType:
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return nil, err
-		}
-		return &Metric{
-			Name:  name,
-			Type:  GaugeType,
-			Value: val,
-		}, nil
+		return nil
 	case CounterType:
-		val, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		return &Metric{
-			Name:  name,
-			Type:  CounterType,
-			Value: val,
-		}, nil
-	default:
-		return nil, ErrUnknownMetricType
-	}
-}
-
-func Update(metric *Metric, value string) error {
-	switch metric.Type {
-	case GaugeType:
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return err
-		}
-		metric.Value = val
-	case CounterType:
-		val, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return err
-		}
-		v, ok := metric.Value.(int64)
-		if ok {
-			metric.Value = v + val
-		}
+		return nil
 	default:
 		return ErrUnknownMetricType
 	}
-	return nil
+}
+
+func CreateCounter(id string, delta int64) *Metric {
+	return &Metric{
+		ID:    id,
+		Type:  CounterType,
+		Delta: &delta,
+	}
+}
+
+func CreateGauge(id string, value float64) *Metric {
+	return &Metric{
+		ID:    id,
+		Type:  GaugeType,
+		Value: &value,
+	}
 }

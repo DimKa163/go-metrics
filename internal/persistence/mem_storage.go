@@ -47,13 +47,13 @@ func (s *MemStorage) GetAll() []models.Metric {
 
 func (s *MemStorage) Create(metric *models.Metric) error {
 	if metricGroup, ok := s.metrics[metric.Type]; ok {
-		if _, ok := metricGroup[metric.Name]; ok {
+		if _, ok := metricGroup[metric.ID]; ok {
 			return ErrValueAlreadyExist
 		}
-		metricGroup[metric.Name] = metric
+		metricGroup[metric.ID] = metric
 		return nil
 	}
 	s.metrics[metric.Type] = make(map[string]*models.Metric)
-	s.metrics[metric.Type][metric.Name] = metric
+	s.metrics[metric.Type][metric.ID] = metric
 	return nil
 }

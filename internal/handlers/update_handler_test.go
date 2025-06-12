@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -14,28 +15,33 @@ func TestUpdate(t *testing.T) {
 		name               string
 		method             string
 		url                string
+		body               string
+		expectedBody       int
 		data               map[models.MetricType]map[string]*models.Metric
 		expectedStatusCode int
 	}{
 		{
 			name:               "success gauge",
 			method:             http.MethodPost,
-			url:                "/update/gauge/TestMetric/100",
+			url:                "/update",
 			data:               make(map[models.MetricType]map[string]*models.Metric),
 			expectedStatusCode: http.StatusOK,
+			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"gauge\",\n    \"value\": 100.0\n}",
 		},
 		{
 			name:               "success counter",
 			method:             http.MethodPost,
-			url:                "/update/counter/TestCounter/2",
+			url:                "/update",
 			data:               make(map[models.MetricType]map[string]*models.Metric),
+			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"counter\",\n    \"delta\": 100\n}",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:               "wrong type",
 			method:             http.MethodPost,
-			url:                "/update/otherType/TestMetric/100",
+			url:                "/update",
 			data:               make(map[models.MetricType]map[string]*models.Metric),
+			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"otherType\",\n    \"delta\": 100\n}",
 			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
@@ -45,9 +51,9 @@ func TestUpdate(t *testing.T) {
 			updateHandler := Update(&mockGaugeRepository{
 				data: c.data,
 			})
-			router.POST("/update/:type/:name/:value", updateHandler)
+			router.POST("/update", updateHandler)
 			res := httptest.NewRecorder()
-			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, nil))
+			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, strings.NewReader(c.body)))
 			assert.Equal(t, c.expectedStatusCode, res.Code)
 		})
 	}
