@@ -15,6 +15,50 @@ func TestUpdate(t *testing.T) {
 		name               string
 		method             string
 		url                string
+		data               map[models.MetricType]map[string]*models.Metric
+		expectedStatusCode int
+	}{
+		{
+			name:               "success gauge",
+			method:             http.MethodPost,
+			url:                "/update/gauge/TestMetric/100",
+			data:               make(map[models.MetricType]map[string]*models.Metric),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "success counter",
+			method:             http.MethodPost,
+			url:                "/update/counter/TestCounter/2",
+			data:               make(map[models.MetricType]map[string]*models.Metric),
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "wrong type",
+			method:             http.MethodPost,
+			url:                "/update/otherType/TestMetric/100",
+			data:               make(map[models.MetricType]map[string]*models.Metric),
+			expectedStatusCode: http.StatusBadRequest,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			router := gin.Default()
+			updateHandler := Update(&mockGaugeRepository{
+				data: c.data,
+			})
+			router.POST(c.url, updateHandler)
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, nil))
+			assert.Equal(t, c.expectedStatusCode, res.Code)
+		})
+	}
+}
+
+func TestUpdateJSON(t *testing.T) {
+	cases := []struct {
+		name               string
+		method             string
+		url                string
 		body               string
 		expectedBody       int
 		data               map[models.MetricType]map[string]*models.Metric
@@ -51,7 +95,7 @@ func TestUpdate(t *testing.T) {
 			updateHandler := Update(&mockGaugeRepository{
 				data: c.data,
 			})
-			router.POST("/update", updateHandler)
+			router.POST(c.url, updateHandler)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, strings.NewReader(c.body)))
 			assert.Equal(t, c.expectedStatusCode, res.Code)
