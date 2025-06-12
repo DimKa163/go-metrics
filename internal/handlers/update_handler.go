@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func Update(repository persistence.Repository) func(c *gin.Context) {
+func UpdateJSON(repository persistence.Repository) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var metric models.Metric
 		if err := c.ShouldBindJSON(&metric); err != nil {
@@ -32,5 +32,35 @@ func Update(repository persistence.Repository) func(c *gin.Context) {
 			existingMetric.Delta = metric.Delta
 		}
 		c.JSON(http.StatusOK, existingMetric)
+	}
+}
+
+func Update(repository persistence.Repository) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		t := c.Param("type")
+		name := c.Param("name")
+		var metric *models.Metric
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		metric = repository.Find(models.MetricType(t), name)
+		if metric == nil {
+			var err error
+			if metric, err = models.CreateMetric(t, name, c.Param("value")); err != nil {
+				c.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			err = repository.Create(metric)
+			if err != nil {
+				c.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		} else {
+			err := models.Update(metric, c.Param("value"))
+			if err != nil {
+				c.Writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		c.Writer.WriteHeader(http.StatusOK)
 	}
 }

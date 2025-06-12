@@ -24,8 +24,10 @@ func run() error {
 	router.LoadHTMLFiles("views/home.tmpl")
 	store := persistence.NewMemStorage()
 	router.GET("/", handlers.HomeHandler(store))
-	router.POST("/value", handlers.GetHandler(store))
-	router.POST("/update", handlers.Update(store))
+	router.GET("/value/:type/:name", handlers.GetHandler(store))
+	router.POST("/value", handlers.GetHandlerJSON(store))
+	router.POST("/update/:type/:name/:value", handlers.Update(store))
+	router.POST("/update", handlers.UpdateJSON(store))
 	return router.Run(addr)
 }
 
