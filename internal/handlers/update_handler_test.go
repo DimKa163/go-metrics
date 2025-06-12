@@ -40,13 +40,14 @@ func TestUpdate(t *testing.T) {
 			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			router := gin.Default()
 			updateHandler := Update(&mockGaugeRepository{
 				data: c.data,
 			})
-			router.POST(c.url, updateHandler)
+			router.POST("/update/:type/:name/:value", updateHandler)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, nil))
 			assert.Equal(t, c.expectedStatusCode, res.Code)
@@ -92,10 +93,10 @@ func TestUpdateJSON(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			router := gin.Default()
-			updateHandler := Update(&mockGaugeRepository{
+			updateHandler := UpdateJSON(&mockGaugeRepository{
 				data: c.data,
 			})
-			router.POST(c.url, updateHandler)
+			router.POST("/update", updateHandler)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, strings.NewReader(c.body)))
 			assert.Equal(t, c.expectedStatusCode, res.Code)
