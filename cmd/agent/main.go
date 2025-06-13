@@ -56,6 +56,7 @@ func report(cl client.MetricClient, memStats *runtime.MemStats, count int64) {
 	execute(cl.UpdateGauge, "StackSys", float64(memStats.StackSys))
 	execute(cl.UpdateGauge, "Sys", float64(memStats.Sys))
 	execute(cl.UpdateGauge, "TotalAlloc", float64(memStats.TotalAlloc))
+	execute(cl.UpdateGauge, "NextGC", float64(memStats.NextGC))
 	execute(cl.UpdateCounter, "PollCount", count)
 }
 
