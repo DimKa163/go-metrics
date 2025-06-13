@@ -28,8 +28,7 @@ func UpdateJSON(repository persistence.Repository) func(c *gin.Context) {
 				return
 			}
 		} else {
-			existingMetric.Value = metric.Value
-			existingMetric.Delta = metric.Delta
+			existingMetric.Add(&metric)
 		}
 		c.JSON(http.StatusOK, existingMetric)
 	}

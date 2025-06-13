@@ -23,6 +23,16 @@ type Metric struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
+func (m *Metric) Add(metric *Metric) {
+	switch metric.Type {
+	case GaugeType:
+		m.Value = metric.Value
+	case CounterType:
+		sum := *m.Delta + *metric.Delta
+		m.Delta = &sum
+	}
+}
+
 func ValidateMetric(model *Metric) error {
 	if model.Type != GaugeType && model.Type != CounterType {
 		return ErrUnknownMetricType
