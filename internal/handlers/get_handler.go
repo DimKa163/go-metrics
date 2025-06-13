@@ -41,6 +41,13 @@ func GetHandlerJSON(repository persistence.Repository) func(c *gin.Context) {
 			return
 		}
 		c.Header("Content-Type", "application/json")
-		c.JSON(http.StatusOK, metric)
+		switch metric.Type {
+		case models.GaugeType:
+			c.JSON(http.StatusOK, metric.Value)
+		case models.CounterType:
+			c.JSON(http.StatusOK, metric.Delta)
+		default:
+			c.JSON(http.StatusNotFound, "")
+		}
 	}
 }
