@@ -17,7 +17,14 @@ func GetHandler(repository persistence.Repository) func(c *gin.Context) {
 			return
 		}
 		c.Header("Content-Type", "text/plain")
-		c.JSON(http.StatusOK, metric.Value)
+		switch t {
+		case models.GaugeType:
+			c.JSON(http.StatusOK, metric.Value)
+		case models.CounterType:
+			c.JSON(http.StatusOK, metric.Delta)
+		default:
+			c.JSON(http.StatusNotFound, "")
+		}
 	}
 }
 
