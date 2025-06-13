@@ -16,13 +16,11 @@ type Gauge float64
 
 type Counter int64
 
-type MetricType string
-
 type Metric struct {
-	ID    string     `json:"id"`
-	Type  MetricType `json:"type"`
-	Delta *int64     `json:"delta,omitempty"`
-	Value *float64   `json:"value,omitempty"`
+	ID    string   `json:"id"`
+	Type  string   `json:"type"`
+	Delta *int64   `json:"delta,omitempty"`
+	Value *float64 `json:"value,omitempty"`
 }
 
 func ValidateMetric(model *Metric) error {

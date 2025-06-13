@@ -11,7 +11,7 @@ func GetHandler(repository persistence.Repository) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		t := c.Param("type")
 		name := c.Param("name")
-		metric := repository.Find(models.MetricType(t), name)
+		metric := repository.Find(t, name)
 		if metric == nil {
 			c.JSON(http.StatusNotFound, "")
 			return

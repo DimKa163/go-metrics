@@ -41,7 +41,7 @@ func Update(repository persistence.Repository) func(c *gin.Context) {
 		name := c.Param("name")
 		var metric *models.Metric
 		c.Writer.Header().Set("Content-Type", "text/plain")
-		metric = repository.Find(models.MetricType(t), name)
+		metric = repository.Find(t, name)
 		if metric == nil {
 			var err error
 			if metric, err = models.CreateMetric(t, name, c.Param("value")); err != nil {
