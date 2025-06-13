@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/client"
+	"math/rand"
 	"runtime"
 	"time"
 )
@@ -57,6 +58,10 @@ func report(cl client.MetricClient, memStats *runtime.MemStats, count int64) {
 	execute(cl.UpdateGauge, "Sys", float64(memStats.Sys))
 	execute(cl.UpdateGauge, "TotalAlloc", float64(memStats.TotalAlloc))
 	execute(cl.UpdateGauge, "NextGC", float64(memStats.NextGC))
+	execute(cl.UpdateGauge, "PauseTotalNs", float64(memStats.PauseTotalNs))
+	execute(cl.UpdateGauge, "MSpanInuse", float64(memStats.MSpanInuse))
+	execute(cl.UpdateGauge, "Lookups", float64(memStats.Lookups))
+	execute(cl.UpdateGauge, "RandomValue", rand.Float64())
 	execute(cl.UpdateCounter, "PollCount", count)
 }
 
