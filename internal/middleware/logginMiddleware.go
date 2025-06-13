@@ -9,10 +9,17 @@ import (
 
 func WithLogging() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var bytes []byte
+		var body string
+		_, err := c.Request.Body.Read(bytes)
+		if err != nil {
+			body = string(bytes)
+		}
 		logging.Log.Info(
 			"got incoming HTTP request",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
+			zap.String("body", body),
 		)
 		startTime := time.Now()
 		c.Next()
