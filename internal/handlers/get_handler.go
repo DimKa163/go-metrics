@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"github.com/DimKa163/go-metrics/internal/logging"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/persistence"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -37,6 +39,7 @@ func GetHandlerJSON(repository persistence.Repository) func(c *gin.Context) {
 		}
 		metric := repository.Find(model.Type, model.ID)
 		if metric == nil {
+			logging.Log.Info("metric not found", zap.Any("metric", model))
 			c.JSON(http.StatusNotFound, "")
 			return
 		}
