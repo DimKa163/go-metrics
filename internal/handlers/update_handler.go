@@ -58,8 +58,6 @@ func Update(repository persistence.Repository) func(c *gin.Context) {
 				c.Writer.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			c.Writer.WriteHeader(http.StatusOK)
-			return
 		} else {
 			err := models.Update(metric, c.Param("value"))
 			if err != nil {
@@ -67,6 +65,7 @@ func Update(repository persistence.Repository) func(c *gin.Context) {
 				return
 			}
 		}
+
 		c.Writer.WriteHeader(http.StatusOK)
 	}
 }

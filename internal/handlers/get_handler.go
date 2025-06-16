@@ -14,6 +14,11 @@ func GetHandler(repository persistence.Repository) func(c *gin.Context) {
 		t := c.Param("type")
 		name := c.Param("name")
 		metric := repository.Find(t, name)
+		if metric == nil {
+			c.JSON(http.StatusNotFound, "")
+			return
+		}
+		c.Header("Content-Type", "text/plain")
 		switch t {
 		case models.GaugeType:
 			c.JSON(http.StatusOK, metric.Value)
@@ -47,6 +52,5 @@ func GetHandlerJSON(repository persistence.Repository) func(c *gin.Context) {
 		default:
 			c.JSON(http.StatusNotFound, "")
 		}
-		c.JSON(http.StatusOK, metric.Value)
 	}
 }
