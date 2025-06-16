@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -14,28 +15,28 @@ func TestUpdate(t *testing.T) {
 		name               string
 		method             string
 		url                string
-		data               map[models.MetricType]map[string]*models.Metric
+		data               map[string]map[string]*models.Metric
 		expectedStatusCode int
 	}{
 		{
 			name:               "success gauge",
 			method:             http.MethodPost,
 			url:                "/update/gauge/TestMetric/100",
-			data:               make(map[models.MetricType]map[string]*models.Metric),
+			data:               make(map[string]map[string]*models.Metric),
 			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:               "success counter",
 			method:             http.MethodPost,
 			url:                "/update/counter/TestCounter/2",
-			data:               make(map[models.MetricType]map[string]*models.Metric),
+			data:               make(map[string]map[string]*models.Metric),
 			expectedStatusCode: http.StatusOK,
 		},
 		{
 			name:               "wrong type",
 			method:             http.MethodPost,
 			url:                "/update/otherType/TestMetric/100",
-			data:               make(map[models.MetricType]map[string]*models.Metric),
+			data:               make(map[string]map[string]*models.Metric),
 			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
@@ -53,19 +54,68 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-type mockGaugeRepository struct {
-	data map[models.MetricType]map[string]*models.Metric
+func TestUpdateJSON(t *testing.T) {
+	cases := []struct {
+		name               string
+		method             string
+		url                string
+		body               string
+		expectedBody       int
+		data               map[string]map[string]*models.Metric
+		expectedStatusCode int
+	}{
+		{
+			name:               "success gauge",
+			method:             http.MethodPost,
+			url:                "/update",
+			data:               make(map[string]map[string]*models.Metric),
+			expectedStatusCode: http.StatusOK,
+			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"gauge\",\n    \"value\": 100.0\n}",
+		},
+		{
+			name:               "success counter",
+			method:             http.MethodPost,
+			url:                "/update",
+			data:               make(map[string]map[string]*models.Metric),
+			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"counter\",\n    \"delta\": 100\n}",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:               "wrong type",
+			method:             http.MethodPost,
+			url:                "/update",
+			data:               make(map[string]map[string]*models.Metric),
+			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"otherType\",\n    \"delta\": 100\n}",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			router := gin.Default()
+			updateHandler := UpdateJSON(&mockGaugeRepository{
+				data: c.data,
+			})
+			router.POST("/update", updateHandler)
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, strings.NewReader(c.body)))
+			assert.Equal(t, c.expectedStatusCode, res.Code)
+		})
+	}
 }
 
-func (m *mockGaugeRepository) Find(metricType models.MetricType, key string) *models.Metric {
+type mockGaugeRepository struct {
+	data map[string]map[string]*models.Metric
+}
+
+func (m *mockGaugeRepository) Find(_ string, _ string) *models.Metric {
 	return nil
 }
-func (m *mockGaugeRepository) Get(metricType models.MetricType, key string) (*models.Metric, error) {
+func (m *mockGaugeRepository) Get(_ string, _ string) (*models.Metric, error) {
 	return nil, nil
 }
 func (m *mockGaugeRepository) GetAll() []models.Metric {
 	return make([]models.Metric, 0)
 }
-func (m *mockGaugeRepository) Create(metric *models.Metric) error {
+func (m *mockGaugeRepository) Create(_ *models.Metric) error {
 	return nil
 }
