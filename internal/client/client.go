@@ -58,6 +58,10 @@ func (c *metricClient) UpdateCounter(name string, value int64) error {
 		return err
 	}
 	req, err := http.NewRequest(http.MethodPost, fullAddr, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
