@@ -14,7 +14,6 @@ func WithLogging() gin.HandlerFunc {
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 		)
-
 		startTime := time.Now()
 		c.Next()
 		elapsed := time.Since(startTime)

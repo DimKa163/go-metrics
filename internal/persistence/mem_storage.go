@@ -9,23 +9,23 @@ var ErrValueNotFound = errors.New("value not found")
 var ErrValueAlreadyExist = errors.New("value already exist")
 
 type MemStorage struct {
-	metrics map[string]map[string]*models.Metric
+	metrics map[models.MetricType]map[string]*models.Metric
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		metrics: make(map[string]map[string]*models.Metric),
+		metrics: make(map[models.MetricType]map[string]*models.Metric),
 	}
 }
 
-func (s *MemStorage) Find(mType string, key string) *models.Metric {
+func (s *MemStorage) Find(mType models.MetricType, key string) *models.Metric {
 	if val, ok := s.metrics[mType][key]; ok {
 		return val
 	}
 	return nil
 }
 
-func (s *MemStorage) Get(mType string, key string) (*models.Metric, error) {
+func (s *MemStorage) Get(mType models.MetricType, key string) (*models.Metric, error) {
 	if val, ok := s.metrics[mType]; ok {
 		if val, ok := val[key]; ok {
 			return val, nil
@@ -47,13 +47,13 @@ func (s *MemStorage) GetAll() []models.Metric {
 
 func (s *MemStorage) Create(metric *models.Metric) error {
 	if metricGroup, ok := s.metrics[metric.Type]; ok {
-		if _, ok := metricGroup[metric.ID]; ok {
+		if _, ok := metricGroup[metric.Name]; ok {
 			return ErrValueAlreadyExist
 		}
-		metricGroup[metric.ID] = metric
+		metricGroup[metric.Name] = metric
 		return nil
 	}
 	s.metrics[metric.Type] = make(map[string]*models.Metric)
-	s.metrics[metric.Type][metric.ID] = metric
+	s.metrics[metric.Type][metric.Name] = metric
 	return nil
 }

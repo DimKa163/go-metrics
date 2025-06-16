@@ -1,8 +1,6 @@
 package client
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"net/http"
@@ -29,13 +27,8 @@ func NewClient(addr string) MetricClient {
 }
 
 func (c *metricClient) UpdateGauge(name string, value float64) error {
-	fullAddr := fmt.Sprintf("%s/update", c.addr)
-	metric := models.CreateGauge(name, value)
-	data, err := json.Marshal(metric)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest(http.MethodPost, fullAddr, bytes.NewReader(data))
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%f", c.addr, models.GaugeType, name, value)
+	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
 	}
@@ -51,17 +44,12 @@ func (c *metricClient) UpdateGauge(name string, value float64) error {
 }
 
 func (c *metricClient) UpdateCounter(name string, value int64) error {
-	fullAddr := fmt.Sprintf("%s/update", c.addr)
-	metric := models.CreateCounter(name, value)
-	data, err := json.Marshal(metric)
+	fullAddr := fmt.Sprintf("%s/update/%s/%s/%d", c.addr, models.CounterType, name, value)
+	req, err := http.NewRequest(http.MethodPost, fullAddr, nil)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, fullAddr, bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "text/plain")
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
