@@ -7,13 +7,14 @@ import (
 	"time"
 )
 
-func WithLogging() gin.HandlerFunc {
+func LoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logging.Log.Info(
 			"got incoming HTTP request",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 		)
+
 		startTime := time.Now()
 		c.Next()
 		elapsed := time.Since(startTime)
