@@ -139,7 +139,6 @@ func TestUpdateGzip(t *testing.T) {
 	router := gin.Default()
 	router.Use(middleware.GzipMiddleware())
 	updateHandler := UpdateJSON(container)
-	router.Use(middleware.GzipMiddleware())
 	router.POST("/update", updateHandler)
 	requestBody := `{
 		"id": "Alloc",
