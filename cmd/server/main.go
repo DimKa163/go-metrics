@@ -1,10 +1,11 @@
 package main
 
 import (
+	"github.com/DimKa163/go-metrics/internal/handlers"
 	"github.com/DimKa163/go-metrics/internal/logging"
-	"github.com/DimKa163/go-metrics/internal/mhttp"
+	"github.com/DimKa163/go-metrics/internal/middleware"
 	"github.com/DimKa163/go-metrics/internal/persistence"
-	"github.com/DimKa163/go-metrics/internal/services"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -19,9 +20,20 @@ func run() error {
 	if err := logging.Initialize(logLevel); err != nil {
 		return err
 	}
-	router := mhttp.NewRouter(&services.ServiceContainer{
-		Repository: persistence.NewMemStorage(),
-	})
+	router := setup()
 	router.LoadHTMLFiles("views/home.tmpl")
+	store := persistence.NewMemStorage()
+	router.GET("/", handlers.HomeHandler(store))
+	router.GET("/value/:type/:name", handlers.GetHandler(store))
+	router.POST("/value", handlers.GetHandlerJSON(store))
+	router.POST("/update/:type/:name/:value", handlers.Update(store))
+	router.POST("/update", handlers.UpdateJSON(store))
 	return router.Run(addr)
+}
+
+func setup() *gin.Engine {
+	router := gin.Default()
+	router.Use(gin.Recovery())
+	router.Use(middleware.WithLogging())
+	return router
 }

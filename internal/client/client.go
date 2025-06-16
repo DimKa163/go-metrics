@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/models"
@@ -30,85 +29,46 @@ func NewClient(addr string) MetricClient {
 }
 
 func (c *metricClient) UpdateGauge(name string, value float64) error {
+	fullAddr := fmt.Sprintf("%s/update", c.addr)
 	metric := models.CreateGauge(name, value)
-
-	req, err := c.createRequest(metric)
+	data, err := json.Marshal(metric)
 	if err != nil {
 		return err
 	}
-
+	req, err := http.NewRequest(http.MethodPost, fullAddr, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
-
 	defer res.Body.Close()
-
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
-
 	return nil
 }
 
 func (c *metricClient) UpdateCounter(name string, value int64) error {
+	fullAddr := fmt.Sprintf("%s/update", c.addr)
 	metric := models.CreateCounter(name, value)
-
-	req, err := c.createRequest(metric)
+	data, err := json.Marshal(metric)
 	if err != nil {
 		return err
 	}
-
+	req, err := http.NewRequest(http.MethodPost, fullAddr, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
 	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
-
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	return nil
-}
-
-func (c *metricClient) createRequest(metric *models.Metric) (*http.Request, error) {
-	fullAddr := fmt.Sprintf("%s/update", c.addr)
-
-	data, err := json.Marshal(metric)
-	if err != nil {
-		return nil, err
-	}
-
-	buffer := bytes.NewBuffer(nil)
-
-	err = compress(data, buffer)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, fullAddr, buffer)
-
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Encoding", "gzip")
-
-	req.Header.Add("Content-Type", "application/json")
-	return req, nil
-}
-
-func compress(data []byte, buffer *bytes.Buffer) error {
-	writer := gzip.NewWriter(buffer)
-	_, err := writer.Write(data)
-	if err != nil {
-		return err
-	}
-
-	err = writer.Close()
-	if err != nil {
-		return err
 	}
 	return nil
 }

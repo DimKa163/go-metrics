@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func LoggingMiddleware() gin.HandlerFunc {
+func WithLogging() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logging.Log.Info(
 			"got incoming HTTP request",

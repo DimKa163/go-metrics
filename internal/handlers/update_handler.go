@@ -3,13 +3,13 @@ package handlers
 import (
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/services"
+	"github.com/DimKa163/go-metrics/internal/persistence"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
 )
 
-func UpdateJSON(container *services.ServiceContainer) func(c *gin.Context) {
+func UpdateJSON(repository persistence.Repository) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var metric models.Metric
 		if err := c.ShouldBindJSON(&metric); err != nil {
@@ -21,12 +21,12 @@ func UpdateJSON(container *services.ServiceContainer) func(c *gin.Context) {
 			return
 		}
 		c.Writer.Header().Set("Content-Type", "application/json")
-		existingMetric := container.Repository.Find(metric.Type, metric.ID)
+		existingMetric := repository.Find(metric.Type, metric.ID)
 		if existingMetric == nil {
 			existingMetric = &metric
 			logging.Log.Info("inserting metric",
 				zap.Any("metric", metric))
-			err := container.Repository.Create(existingMetric)
+			err := repository.Create(existingMetric)
 			if err != nil {
 				c.Writer.WriteHeader(http.StatusBadRequest)
 				return
@@ -39,13 +39,13 @@ func UpdateJSON(container *services.ServiceContainer) func(c *gin.Context) {
 	}
 }
 
-func Update(container *services.ServiceContainer) func(c *gin.Context) {
+func Update(repository persistence.Repository) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		t := c.Param("type")
 		name := c.Param("name")
 		var metric *models.Metric
 		c.Writer.Header().Set("Content-Type", "text/plain")
-		metric = container.Repository.Find(t, name)
+		metric = repository.Find(t, name)
 		if metric == nil {
 			var err error
 
@@ -53,7 +53,7 @@ func Update(container *services.ServiceContainer) func(c *gin.Context) {
 				c.Writer.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			err = container.Repository.Create(metric)
+			err = repository.Create(metric)
 			if err != nil {
 				c.Writer.WriteHeader(http.StatusBadRequest)
 				return

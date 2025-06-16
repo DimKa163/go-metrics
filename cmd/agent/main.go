@@ -15,11 +15,12 @@ func main() {
 	seconds := 0
 	cl := client.NewClient(fmt.Sprintf("http://%s", addr))
 	for {
-		var memStats runtime.MemStats
-		runtime.ReadMemStats(&memStats)
+		memStats := &runtime.MemStats{}
+
+		runtime.ReadMemStats(memStats)
 
 		if seconds >= interval {
-			report(cl, &memStats, count)
+			report(cl, memStats, count)
 			interval += reportInterval
 		}
 
