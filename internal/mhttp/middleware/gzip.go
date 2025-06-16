@@ -20,7 +20,7 @@ func GzipMiddleware() gin.HandlerFunc {
 		acceptTypes := c.Request.Header.Get("Accept")
 		supportTypes := strings.Contains(acceptTypes, ContentTypeJSON) || strings.Contains(acceptTypes, ContentTypeHTML)
 		supportsGzip := strings.Contains(acceptEncoding, AcceptEncodingGZIP)
-		if supportsGzip {
+		if supportsGzip && supportTypes {
 			c.Header("Content-Encoding", ContentEncodingGZIP)
 			gz := mgzip.NewGZIPWriter(c.Writer)
 			c.Writer = gz
