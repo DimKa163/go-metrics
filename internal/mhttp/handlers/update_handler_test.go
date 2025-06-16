@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/DimKa163/go-metrics/internal/mhttp"
 	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/services"
@@ -137,7 +136,8 @@ func TestUpdateGzip(t *testing.T) {
 			data: make(map[string]map[string]*models.Metric),
 		},
 	}
-	router := mhttp.NewRouter(container)
+	router := gin.Default()
+	router.Use(middleware.GzipMiddleware())
 	updateHandler := UpdateJSON(container)
 	router.Use(middleware.GzipMiddleware())
 	router.POST("/update", updateHandler)
