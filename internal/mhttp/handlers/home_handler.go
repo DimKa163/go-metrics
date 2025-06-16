@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/persistence"
+	"github.com/DimKa163/go-metrics/internal/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -12,9 +12,9 @@ type metricView struct {
 	Value any
 }
 
-func HomeHandler(repository persistence.Repository) func(c *gin.Context) {
+func HomeHandler(container *services.ServiceContainer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		metrics := repository.GetAll()
+		metrics := container.Repository.GetAll()
 		viewData := make([]metricView, len(metrics))
 		for _, metric := range metrics {
 			switch metric.Type {
