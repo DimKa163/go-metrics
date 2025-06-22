@@ -65,7 +65,7 @@ func (s *MemStorage) Get(key string) (*models.Metric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	if val, ok := s.metrics[key]; ok {
-		return &*val, nil
+		return val, nil
 	}
 	return nil, ErrValueNotFound
 }
@@ -84,9 +84,7 @@ func (s *MemStorage) GetAll() []models.Metric {
 func (s *MemStorage) Upsert(metric *models.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	if _, ok := s.metrics[metric.ID]; ok {
-		delete(s.metrics, metric.ID)
-	}
+	delete(s.metrics, metric.ID)
 	s.metrics[metric.ID] = metric
 	return nil
 }
