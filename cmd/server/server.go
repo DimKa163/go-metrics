@@ -110,15 +110,3 @@ func (s *server) Run(ctx context.Context) error {
 	}()
 	return s.Server.ListenAndServe()
 }
-
-//func (s *server) Run() error {
-//	s.srv = http.Server{
-//		Addr:    s.conf.Addr,
-//		Handler: s.Handler(),
-//	}
-//	return s.srv.ListenAndServe()
-//}
-//
-//func (s *server) Shutdown(ctx context.Context) error {
-//	return s.srv.Shutdown(ctx)
-//}
