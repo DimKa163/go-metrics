@@ -42,6 +42,7 @@ func UpdateJSON(repository persistence.Repository) func(c *gin.Context) {
 
 func Update(repository persistence.Repository) func(c *gin.Context) {
 	return func(c *gin.Context) {
+
 		t := c.Param("type")
 		name := c.Param("name")
 		var metric *models.Metric
