@@ -1,27 +1,36 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"github.com/DimKa163/go-metrics/internal/logging"
-	"github.com/DimKa163/go-metrics/internal/mhttp"
-	"github.com/DimKa163/go-metrics/internal/persistence"
-	"github.com/DimKa163/go-metrics/internal/services"
+	"go.uber.org/zap"
+	"net/http"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	parseFlag()
-	err := run()
-	if err != nil {
-		panic(err)
+	config := getServerConfig()
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	if err := run(ctx, &config); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			logging.Log.Fatal("Failed to run server", zap.Error(err))
+		}
 	}
 }
 
-func run() error {
-	if err := logging.Initialize(logLevel); err != nil {
+func run(ctx context.Context, config *ServerConfig) error {
+	if err := logging.Initialize(config.LogLevel); err != nil {
 		return err
 	}
-	router := mhttp.NewRouter(&services.ServiceContainer{
-		Repository: persistence.NewMemStorage(),
-	})
-	router.LoadHTMLFiles("views/home.tmpl")
-	return router.Run(addr)
+	serviceBuilder := NewServerBuilder(config)
+	if err := serviceBuilder.ConfigureServices(); err != nil {
+		panic(err)
+	}
+	srv := serviceBuilder.Build()
+	srv.LoadHTMLFiles("views/home.tmpl")
+	srv.Route()
+	return srv.Run(ctx)
 }

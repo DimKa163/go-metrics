@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
 	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,40 +20,24 @@ func TestUpdate(t *testing.T) {
 		name               string
 		method             string
 		url                string
-		container          *services.ServiceContainer
 		expectedStatusCode int
 	}{
 		{
-			name:   "success gauge",
-			method: http.MethodPost,
-			url:    "/update/gauge/TestMetric/100",
-			container: &services.ServiceContainer{
-				Repository: &mockGaugeRepository{
-					data: make(map[string]map[string]*models.Metric),
-				},
-			},
+			name:               "success gauge",
+			method:             http.MethodPost,
+			url:                "/update/gauge/TestMetric/100",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:   "success counter",
-			method: http.MethodPost,
-			url:    "/update/counter/TestCounter/2",
-			container: &services.ServiceContainer{
-				Repository: &mockGaugeRepository{
-					data: make(map[string]map[string]*models.Metric),
-				},
-			},
+			name:               "success counter",
+			method:             http.MethodPost,
+			url:                "/update/counter/TestCounter/2",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:   "wrong type",
-			method: http.MethodPost,
-			url:    "/update/otherType/TestMetric/100",
-			container: &services.ServiceContainer{
-				Repository: &mockGaugeRepository{
-					data: make(map[string]map[string]*models.Metric),
-				},
-			},
+			name:               "wrong type",
+			method:             http.MethodPost,
+			url:                "/update/otherType/TestMetric/100",
 			expectedStatusCode: http.StatusBadRequest,
 		},
 	}
@@ -62,7 +45,9 @@ func TestUpdate(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			router := gin.Default()
-			updateHandler := Update(c.container)
+			updateHandler := Update(&mockGaugeRepository{
+				data: make(map[string]map[string]*models.Metric),
+			})
 			router.POST("/update/:type/:name/:value", updateHandler)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, nil))
@@ -78,42 +63,26 @@ func TestUpdateJSON(t *testing.T) {
 		url                string
 		body               string
 		expectedBody       int
-		container          *services.ServiceContainer
 		expectedStatusCode int
 	}{
 		{
-			name:   "success gauge",
-			method: http.MethodPost,
-			url:    "/update",
-			container: &services.ServiceContainer{
-				Repository: &mockGaugeRepository{
-					data: make(map[string]map[string]*models.Metric),
-				},
-			},
+			name:               "success gauge",
+			method:             http.MethodPost,
+			url:                "/update",
 			expectedStatusCode: http.StatusOK,
 			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"gauge\",\n    \"value\": 100.0\n}",
 		},
 		{
-			name:   "success counter",
-			method: http.MethodPost,
-			url:    "/update",
-			container: &services.ServiceContainer{
-				Repository: &mockGaugeRepository{
-					data: make(map[string]map[string]*models.Metric),
-				},
-			},
+			name:               "success counter",
+			method:             http.MethodPost,
+			url:                "/update",
 			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"counter\",\n    \"delta\": 100\n}",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:   "wrong type",
-			method: http.MethodPost,
-			url:    "/update",
-			container: &services.ServiceContainer{
-				Repository: &mockGaugeRepository{
-					data: make(map[string]map[string]*models.Metric),
-				},
-			},
+			name:               "wrong type",
+			method:             http.MethodPost,
+			url:                "/update",
 			body:               "{\n    \"id\": \"TestMetric\",\n    \"type\": \"otherType\",\n    \"delta\": 100\n}",
 			expectedStatusCode: http.StatusBadRequest,
 		},
@@ -121,7 +90,9 @@ func TestUpdateJSON(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			router := gin.Default()
-			updateHandler := UpdateJSON(c.container)
+			updateHandler := UpdateJSON(&mockGaugeRepository{
+				data: make(map[string]map[string]*models.Metric),
+			})
 			router.POST("/update", updateHandler)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, strings.NewReader(c.body)))
@@ -131,14 +102,11 @@ func TestUpdateJSON(t *testing.T) {
 }
 
 func TestUpdateGzip(t *testing.T) {
-	container := &services.ServiceContainer{
-		Repository: &mockGaugeRepository{
-			data: make(map[string]map[string]*models.Metric),
-		},
-	}
 	router := gin.Default()
 	router.Use(middleware.GzipMiddleware())
-	updateHandler := UpdateJSON(container)
+	updateHandler := UpdateJSON(&mockGaugeRepository{
+		data: make(map[string]map[string]*models.Metric),
+	})
 	router.POST("/update", updateHandler)
 	requestBody := `{
 		"id": "Alloc",
@@ -176,15 +144,15 @@ type mockGaugeRepository struct {
 	data map[string]map[string]*models.Metric
 }
 
-func (m *mockGaugeRepository) Find(_ string, _ string) *models.Metric {
+func (m *mockGaugeRepository) Find(_ string) *models.Metric {
 	return nil
 }
-func (m *mockGaugeRepository) Get(_ string, _ string) (*models.Metric, error) {
+func (m *mockGaugeRepository) Get(_ string) (*models.Metric, error) {
 	return nil, nil
 }
 func (m *mockGaugeRepository) GetAll() []models.Metric {
 	return make([]models.Metric, 0)
 }
-func (m *mockGaugeRepository) Create(_ *models.Metric) error {
+func (m *mockGaugeRepository) Upsert(_ *models.Metric) error {
 	return nil
 }

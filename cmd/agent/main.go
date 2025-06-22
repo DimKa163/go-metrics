@@ -1,69 +1,77 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/client"
 	"math/rand"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"time"
 )
 
 func main() {
 	parseFlags()
-	count := int64(0)
-	interval := reportInterval
-	seconds := 0
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	_ = run(ctx)
+}
+
+func run(ctx context.Context) error {
+	var count int64
 	cl := client.NewClient(fmt.Sprintf("http://%s", addr))
+	pollTicker := time.NewTicker(time.Duration(pollInterval) * time.Second)
+	reportTicker := time.NewTicker(time.Duration(reportInterval) * time.Second)
+	values := make(map[string]float64)
 	for {
-		var memStats runtime.MemStats
-		runtime.ReadMemStats(&memStats)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-pollTicker.C:
+			var memStats runtime.MemStats
+			runtime.ReadMemStats(&memStats)
+			values["Alloc"] = float64(memStats.Alloc)
+			values["BuckHashSys"] = float64(memStats.BuckHashSys)
+			values["Frees"] = float64(memStats.Frees)
+			values["GCCPUFraction"] = float64(memStats.GCCPUFraction)
+			values["GCSys"] = float64(memStats.GCSys)
+			values["HeapAlloc"] = float64(memStats.HeapAlloc)
+			values["HeapIdle"] = float64(memStats.HeapIdle)
+			values["HeapInuse"] = float64(memStats.HeapInuse)
+			values["HeapObjects"] = float64(memStats.HeapObjects)
+			values["HeapReleased"] = float64(memStats.HeapReleased)
+			values["HeapSys"] = float64(memStats.HeapSys)
+			values["LastGC"] = float64(memStats.LastGC)
+			values["MCacheInuse"] = float64(memStats.MCacheInuse)
+			values["MCacheSys"] = float64(memStats.MCacheSys)
+			values["MSpanSys"] = float64(memStats.MSpanSys)
+			values["Mallocs"] = float64(memStats.Mallocs)
+			values["NextGC"] = float64(memStats.NextGC)
 
-		if seconds >= interval {
-			report(cl, &memStats, count)
-			interval += reportInterval
+			values["NumForcedGC"] = float64(memStats.NumForcedGC)
+			values["NumGC"] = float64(memStats.NumGC)
+			values["OtherSys"] = float64(memStats.OtherSys)
+
+			values["PauseTotalNs"] = float64(memStats.PauseTotalNs)
+			values["StackInuse"] = float64(memStats.StackInuse)
+			values["StackSys"] = float64(memStats.StackSys)
+			values["Sys"] = float64(memStats.Sys)
+
+			values["TotalAlloc"] = float64(memStats.TotalAlloc)
+			values["MSpanInuse"] = float64(memStats.MSpanInuse)
+			values["Lookups"] = float64(memStats.Lookups)
+			values["RandomValue"] = rand.Float64()
+			count++
+		case <-reportTicker.C:
+			for k, v := range values {
+				execute(cl.UpdateGauge, k, v)
+			}
+			execute(cl.UpdateCounter, "PollCount", count)
+
 		}
-
-		time.Sleep(time.Duration(pollInterval) * time.Second)
-		count++
-		seconds += pollInterval
 	}
 }
-
-func report(cl client.MetricClient, memStats *runtime.MemStats, count int64) {
-	execute(cl.UpdateGauge, "Alloc", float64(memStats.Alloc))
-	execute(cl.UpdateGauge, "BuckHashSys", float64(memStats.BuckHashSys))
-	execute(cl.UpdateGauge, "Frees", float64(memStats.Frees))
-	execute(cl.UpdateGauge, "GCCPUFraction", memStats.GCCPUFraction)
-	execute(cl.UpdateGauge, "GCSys", float64(memStats.GCSys))
-	execute(cl.UpdateGauge, "HeapAlloc", float64(memStats.HeapAlloc))
-	execute(cl.UpdateGauge, "HeapIdle", float64(memStats.HeapIdle))
-	execute(cl.UpdateGauge, "HeapInuse", float64(memStats.HeapInuse))
-	execute(cl.UpdateGauge, "HeapObjects", float64(memStats.HeapObjects))
-	execute(cl.UpdateGauge, "HeapReleased", float64(memStats.HeapReleased))
-	execute(cl.UpdateGauge, "HeapSys", float64(memStats.HeapSys))
-	execute(cl.UpdateGauge, "LastGC", float64(memStats.LastGC))
-	execute(cl.UpdateGauge, "MCacheInuse", float64(memStats.Lookups))
-	execute(cl.UpdateGauge, "MCacheInuse", float64(memStats.MCacheInuse))
-	execute(cl.UpdateGauge, "MCacheSys", float64(memStats.MCacheSys))
-	execute(cl.UpdateGauge, "MSpanSys", float64(memStats.MSpanSys))
-	execute(cl.UpdateGauge, "Mallocs", float64(memStats.Mallocs))
-	execute(cl.UpdateGauge, "NumForcedGC", float64(memStats.NextGC))
-	execute(cl.UpdateGauge, "NumForcedGC", float64(memStats.NumForcedGC))
-	execute(cl.UpdateGauge, "NumGC", float64(memStats.NumGC))
-	execute(cl.UpdateGauge, "OtherSys", float64(memStats.OtherSys))
-	execute(cl.UpdateGauge, "StackInuse", float64(memStats.PauseTotalNs))
-	execute(cl.UpdateGauge, "StackInuse", float64(memStats.StackInuse))
-	execute(cl.UpdateGauge, "StackSys", float64(memStats.StackSys))
-	execute(cl.UpdateGauge, "Sys", float64(memStats.Sys))
-	execute(cl.UpdateGauge, "TotalAlloc", float64(memStats.TotalAlloc))
-	execute(cl.UpdateGauge, "NextGC", float64(memStats.NextGC))
-	execute(cl.UpdateGauge, "PauseTotalNs", float64(memStats.PauseTotalNs))
-	execute(cl.UpdateGauge, "MSpanInuse", float64(memStats.MSpanInuse))
-	execute(cl.UpdateGauge, "Lookups", float64(memStats.Lookups))
-	execute(cl.UpdateGauge, "RandomValue", rand.Float64())
-	execute(cl.UpdateCounter, "PollCount", count)
-}
-
 func execute[T float64 | int64](handler func(name string, value T) error, name string, value T) {
 	err := handler(name, value)
 	if err != nil {

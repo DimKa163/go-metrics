@@ -23,7 +23,7 @@ type Metric struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
-func (m *Metric) Add(metric *Metric) {
+func (m *Metric) Update(metric *Metric) {
 	switch metric.Type {
 	case GaugeType:
 		m.Value = metric.Value
