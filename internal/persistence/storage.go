@@ -17,22 +17,12 @@ type StoreOption struct {
 
 type MemStorage struct {
 	metrics map[string]*models.Metric
+	filer   *files.Filer
 	mutex   *sync.RWMutex
 	option  StoreOption
 }
 
-func ConfigureStore(filer files.Filer, options StoreOption) (Repository, error) {
-	store, err := NewStore(filer, options)
-	if err != nil {
-		return nil, err
-	}
-	if options.UseSYNC {
-		return NewSyncStore(filer, store)
-	}
-	return store, nil
-}
-
-func NewStore(filer files.Filer, options StoreOption) (Repository, error) {
+func NewStore(filer *files.Filer, options StoreOption) (Repository, error) {
 	data := make(map[string]*models.Metric)
 	if options.Restore {
 		metrics, err := filer.Restore()
@@ -48,6 +38,7 @@ func NewStore(filer files.Filer, options StoreOption) (Repository, error) {
 	return &MemStorage{
 		metrics: data,
 		option:  options,
+		filer:   filer,
 		mutex:   &sync.RWMutex{},
 	}, nil
 }
@@ -86,36 +77,12 @@ func (s *MemStorage) Upsert(metric *models.Metric) error {
 	defer s.mutex.Unlock()
 	delete(s.metrics, metric.ID)
 	s.metrics[metric.ID] = metric
-	return nil
-}
-
-type SyncMemStorage struct {
-	Repository
-	filer files.Filer
-}
-
-func NewSyncStore(filer files.Filer, inner Repository) (Repository, error) {
-	return &SyncMemStorage{
-		Repository: inner,
-		filer:      filer,
-	}, nil
-}
-func (s *SyncMemStorage) Find(key string) *models.Metric {
-	return s.Repository.Find(key)
-}
-
-func (s *SyncMemStorage) Get(key string) (*models.Metric, error) {
-	return s.Repository.Get(key)
-}
-
-func (s *SyncMemStorage) GetAll() []models.Metric {
-	return s.Repository.GetAll()
-
-}
-func (s *SyncMemStorage) Upsert(metric *models.Metric) error {
-	err := s.Repository.Upsert(metric)
-	if err != nil {
-		return err
+	if s.option.UseSYNC {
+		var result []models.Metric
+		for _, met := range s.metrics {
+			result = append(result, *met)
+		}
+		return s.filer.Dump(result)
 	}
-	return s.filer.Dump(s.Repository.GetAll())
+	return nil
 }

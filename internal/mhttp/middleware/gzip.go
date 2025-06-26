@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/DimKa163/go-metrics/internal/mgzip"
+	"github.com/DimKa163/go-metrics/internal/gzip"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
@@ -22,7 +22,7 @@ func GzipMiddleware() gin.HandlerFunc {
 		supportsGzip := strings.Contains(acceptEncoding, AcceptEncodingGZIP)
 		if supportsGzip && supportTypes {
 			c.Header("Content-Encoding", ContentEncodingGZIP)
-			gz := mgzip.NewGZIPWriter(c.Writer)
+			gz := gzip.NewWriter(c.Writer)
 			c.Writer = gz
 			defer func() {
 				c.Header("Content-Length", "0")
@@ -35,12 +35,14 @@ func GzipMiddleware() gin.HandlerFunc {
 		supportTypes = strings.Contains(contentType, ContentTypeJSON) || strings.Contains(contentType, ContentTypeHTML)
 		sendsGzip := strings.Contains(contentEncoding, ContentEncodingGZIP)
 		if sendsGzip && supportTypes {
-			gz, err := mgzip.NewGZIPReader(c.Request.Body)
+			gz, err := gzip.NewReader(c.Request.Body)
 			if err != nil {
 				return
 			}
 			c.Request.Body = gz
-			defer gz.Close()
+			defer func() {
+				_ = gz.Close()
+			}()
 		}
 		c.Next()
 	}

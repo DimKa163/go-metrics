@@ -2,33 +2,32 @@ package main
 
 import (
 	"flag"
-	"github.com/DimKa163/go-metrics/internal/common"
+	"github.com/DimKa163/go-metrics/app/keeper"
+	"github.com/DimKa163/go-metrics/internal/environment"
 	"os"
 )
 
-func getServerConfig() ServerConfig {
-	serverConfig := ServerConfig{}
-	flag.StringVar(&serverConfig.Addr, "a", ":8080", "server address")
-	flag.StringVar(&serverConfig.LogLevel, "l", "info", "log level")
-	flag.Int64Var(&serverConfig.StoreInterval, "i", 300, "store interval")
-	flag.StringVar(&serverConfig.Path, "f", "dump", "file to store data")
-	flag.BoolVar(&serverConfig.Restore, "r", true, "restore data")
+func ParseFlags(config *keeper.Config) {
+	flag.StringVar(&config.Addr, "a", ":8080", "keeper address")
+	flag.StringVar(&config.LogLevel, "l", "info", "log level")
+	flag.Int64Var(&config.StoreInterval, "i", 300, "store interval")
+	flag.StringVar(&config.Path, "f", "dump", "file to store data")
+	flag.BoolVar(&config.Restore, "r", true, "restore data")
 	flag.Parse()
 
 	if envValue := os.Getenv("ADDRESS"); envValue != "" {
-		serverConfig.Addr = envValue
+		config.Addr = envValue
 	}
 
 	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
-		serverConfig.LogLevel = envLogLevel
+		config.LogLevel = envLogLevel
 	}
 
-	common.ParseInt64Env("STORE_INTERVAL", &serverConfig.StoreInterval)
+	environment.ParseInt64Env("STORE_INTERVAL", &config.StoreInterval)
 
 	if envPath := os.Getenv("FILE_STORAGE_PATH"); envPath != "" {
-		serverConfig.Path = envPath
+		config.Path = envPath
 	}
 
-	common.ParseBoolEnv("RESTORE", &serverConfig.Restore)
-	return serverConfig
+	environment.ParseBoolEnv("RESTORE", &config.Restore)
 }

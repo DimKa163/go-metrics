@@ -1,36 +1,25 @@
 package main
 
 import (
-	"context"
 	"errors"
+	"github.com/DimKa163/go-metrics/app/keeper"
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"go.uber.org/zap"
 	"net/http"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
-	config := getServerConfig()
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-	if err := run(ctx, &config); err != nil {
+	var config keeper.Config
+	ParseFlags(&config)
+
+	app, err := keeper.New(&config)
+	if err != nil {
+		logging.Log.Fatal("Failed to configure keeper", zap.Error(err))
+	}
+	app.Map()
+	if err := app.Run(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
-			logging.Log.Fatal("Failed to run server", zap.Error(err))
+			logging.Log.Fatal("Failed to run keeper", zap.Error(err))
 		}
 	}
-}
-
-func run(ctx context.Context, config *ServerConfig) error {
-	if err := logging.Initialize(config.LogLevel); err != nil {
-		return err
-	}
-	serviceBuilder := NewServerBuilder(config)
-	if err := serviceBuilder.ConfigureServices(); err != nil {
-		panic(err)
-	}
-	srv := serviceBuilder.Build()
-	srv.LoadHTMLFiles("views/home.tmpl")
-	srv.Route()
-	return srv.Run(ctx)
 }

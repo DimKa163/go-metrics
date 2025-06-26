@@ -1,9 +1,9 @@
-package main
+package keeper
 
-type ServerConfig struct {
+type Config struct {
 	Addr          string
-	StoreInterval int64
 	Path          string
+	StoreInterval int64
 	Restore       bool
 	LogLevel      string
 }

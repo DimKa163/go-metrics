@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"bytes"
@@ -16,6 +16,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
+
 	cases := []struct {
 		name               string
 		method             string
@@ -45,10 +46,10 @@ func TestUpdate(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			router := gin.Default()
-			updateHandler := Update(&mockGaugeRepository{
+			metrics := NewMetricController(&mockGaugeRepository{
 				data: make(map[string]map[string]*models.Metric),
 			})
-			router.POST("/update/:type/:name/:value", updateHandler)
+			router.POST("/update/:type/:name/:value", metrics.Update)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, nil))
 			assert.Equal(t, c.expectedStatusCode, res.Code)
@@ -90,10 +91,10 @@ func TestUpdateJSON(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			router := gin.Default()
-			updateHandler := UpdateJSON(&mockGaugeRepository{
+			metrics := NewMetricController(&mockGaugeRepository{
 				data: make(map[string]map[string]*models.Metric),
 			})
-			router.POST("/update", updateHandler)
+			router.POST("/update", metrics.UpdateJSON)
 			res := httptest.NewRecorder()
 			router.ServeHTTP(res, httptest.NewRequest(c.method, c.url, strings.NewReader(c.body)))
 			assert.Equal(t, c.expectedStatusCode, res.Code)
@@ -104,10 +105,10 @@ func TestUpdateJSON(t *testing.T) {
 func TestUpdateGzip(t *testing.T) {
 	router := gin.Default()
 	router.Use(middleware.GzipMiddleware())
-	updateHandler := UpdateJSON(&mockGaugeRepository{
+	metrics := NewMetricController(&mockGaugeRepository{
 		data: make(map[string]map[string]*models.Metric),
 	})
-	router.POST("/update", updateHandler)
+	router.POST("/update", metrics.UpdateJSON)
 	requestBody := `{
 		"id": "Alloc",
 		"type": "gauge",

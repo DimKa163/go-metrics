@@ -1,32 +1,32 @@
-package mgzip
+package gzip
 
 import (
 	"compress/gzip"
 	"io"
 )
 
-type GzipReader struct {
+type Reader struct {
 	reader io.ReadCloser
 	gz     *gzip.Reader
 }
 
-func NewGZIPReader(r io.ReadCloser) (*GzipReader, error) {
+func NewReader(r io.ReadCloser) (*Reader, error) {
 	gz, err := gzip.NewReader(r)
 	if err != nil {
 		return nil, err
 	}
 
-	return &GzipReader{
+	return &Reader{
 		reader: r,
 		gz:     gz,
 	}, nil
 }
 
-func (g *GzipReader) Read(p []byte) (n int, err error) {
+func (g *Reader) Read(p []byte) (n int, err error) {
 	return g.gz.Read(p)
 }
 
-func (g *GzipReader) Close() error {
+func (g *Reader) Close() error {
 	if err := g.reader.Close(); err != nil {
 		return err
 	}

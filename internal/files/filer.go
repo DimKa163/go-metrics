@@ -7,22 +7,17 @@ import (
 	"os"
 )
 
-type Filer interface {
-	Restore() ([]models.Metric, error)
-	Dump(metrics []models.Metric) error
-}
-
-type filer struct {
+type Filer struct {
 	path string
 }
 
-func NewFiler(path string) Filer {
-	return &filer{
+func NewFiler(path string) *Filer {
+	return &Filer{
 		path: path,
 	}
 }
 
-func (f *filer) Restore() ([]models.Metric, error) {
+func (f *Filer) Restore() ([]models.Metric, error) {
 	file, err := os.OpenFile(f.path, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		return nil, err
@@ -38,7 +33,7 @@ func (f *filer) Restore() ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (f *filer) Dump(metrics []models.Metric) error {
+func (f *Filer) Dump(metrics []models.Metric) error {
 	file, err := os.OpenFile(f.path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
