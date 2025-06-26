@@ -17,6 +17,7 @@ func main() {
 		logging.Log.Fatal("Failed to configure keeper", zap.Error(err))
 	}
 	app.Map()
+	app.LoadHTMLFiles("views/home.tmpl")
 	if err := app.Run(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
 			logging.Log.Fatal("Failed to run keeper", zap.Error(err))

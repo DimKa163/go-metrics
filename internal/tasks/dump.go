@@ -26,7 +26,7 @@ func NewDumpTask(repository persistence.Repository, filer *files.Filer, interval
 func (task *DumpTask) Start(ctx context.Context) {
 	go func() {
 		if err := task.run(ctx); err != nil {
-			logging.Log.Info("dump task cancelled", zap.Error(err))
+			logging.Log.Error("dump task cancelled", zap.Error(err))
 		}
 	}()
 }

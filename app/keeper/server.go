@@ -91,5 +91,6 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) backup() error {
+	logging.Log.Debug("start backup before shutdown")
 	return s.filer.Dump(s.repository.GetAll())
 }
