@@ -16,7 +16,7 @@ type Collector struct {
 	client client.MetricClient
 }
 
-func NewScrapper(conf *Config) *Collector {
+func NewCollector(conf *Config) *Collector {
 	return &Collector{conf, client.NewClient(conf.Addr)}
 }
 

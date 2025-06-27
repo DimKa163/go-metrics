@@ -8,7 +8,7 @@ import (
 func main() {
 	var config collector.Config
 	ParseFlags(&config)
-	app := collector.NewScrapper(&config)
+	app := collector.NewCollector(&config)
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
