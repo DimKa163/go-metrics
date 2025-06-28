@@ -1,30 +1,26 @@
 package main
 
 import (
-	"github.com/DimKa163/go-metrics/internal/handlers"
-	"github.com/DimKa163/go-metrics/internal/persistence"
-	"github.com/gin-gonic/gin"
+	"errors"
+	"github.com/DimKa163/go-metrics/app/keeper"
+	"github.com/DimKa163/go-metrics/internal/logging"
+	"go.uber.org/zap"
+	"net/http"
 )
 
 func main() {
-	parseFlag()
-	err := run()
+	var config keeper.Config
+	ParseFlags(&config)
+
+	app, err := keeper.New(&config)
 	if err != nil {
-		panic(err)
+		logging.Log.Fatal("Failed to configure keeper", zap.Error(err))
 	}
-}
-
-func run() error {
-	router := setup()
-	router.LoadHTMLFiles("views/home.tmpl")
-	store := persistence.NewMemStorage()
-	router.GET("/", handlers.HomeHandler(store))
-	router.GET("/value/:type/:name", handlers.GetHandler(store))
-	router.POST("/update/:type/:name/:value", handlers.Update(store))
-	return router.Run(addr)
-}
-
-func setup() *gin.Engine {
-	router := gin.Default()
-	return router
+	app.Map()
+	app.LoadHTMLFiles("views/home.tmpl")
+	if err := app.Run(); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			logging.Log.Fatal("Failed to run keeper", zap.Error(err))
+		}
+	}
 }

@@ -16,14 +16,52 @@ type Gauge float64
 
 type Counter int64
 
-type MetricType string
-
 type Metric struct {
-	Name  string     `json:"name"`
-	Type  MetricType `json:"type"`
-	Value any        `json:"value"`
+	ID    string   `json:"id"`
+	Type  string   `json:"type"`
+	Delta *int64   `json:"delta,omitempty"`
+	Value *float64 `json:"value,omitempty"`
 }
 
+func (m *Metric) Update(metric *Metric) {
+	switch metric.Type {
+	case GaugeType:
+		m.Value = metric.Value
+	case CounterType:
+		sum := *m.Delta + *metric.Delta
+		m.Delta = &sum
+	}
+}
+
+func ValidateMetric(model *Metric) error {
+	if model.Type != GaugeType && model.Type != CounterType {
+		return ErrUnknownMetricType
+	}
+	switch model.Type {
+	case GaugeType:
+		return nil
+	case CounterType:
+		return nil
+	default:
+		return ErrUnknownMetricType
+	}
+}
+
+func CreateCounter(id string, delta int64) *Metric {
+	return &Metric{
+		ID:    id,
+		Type:  CounterType,
+		Delta: &delta,
+	}
+}
+
+func CreateGauge(id string, value float64) *Metric {
+	return &Metric{
+		ID:    id,
+		Type:  GaugeType,
+		Value: &value,
+	}
+}
 func CreateMetric(tt string, name string, value string) (*Metric, error) {
 	if tt != GaugeType && tt != CounterType {
 		return nil, ErrUnknownMetricType
@@ -35,9 +73,9 @@ func CreateMetric(tt string, name string, value string) (*Metric, error) {
 			return nil, err
 		}
 		return &Metric{
-			Name:  name,
+			ID:    name,
 			Type:  GaugeType,
-			Value: val,
+			Value: &val,
 		}, nil
 	case CounterType:
 		val, err := strconv.ParseInt(value, 10, 64)
@@ -45,15 +83,14 @@ func CreateMetric(tt string, name string, value string) (*Metric, error) {
 			return nil, err
 		}
 		return &Metric{
-			Name:  name,
+			ID:    name,
 			Type:  CounterType,
-			Value: val,
+			Delta: &val,
 		}, nil
 	default:
 		return nil, ErrUnknownMetricType
 	}
 }
-
 func Update(metric *Metric, value string) error {
 	switch metric.Type {
 	case GaugeType:
@@ -61,16 +98,14 @@ func Update(metric *Metric, value string) error {
 		if err != nil {
 			return err
 		}
-		metric.Value = val
+		metric.Value = &val
 	case CounterType:
 		val, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return err
 		}
-		v, ok := metric.Value.(int64)
-		if ok {
-			metric.Value = v + val
-		}
+		newVal := *metric.Delta + val
+		metric.Delta = &newVal
 	default:
 		return ErrUnknownMetricType
 	}

@@ -2,24 +2,21 @@ package main
 
 import (
 	"flag"
-	"github.com/DimKa163/go-metrics/internal/common"
+	"github.com/DimKa163/go-metrics/app/collector"
+	"github.com/DimKa163/go-metrics/internal/environment"
 	"os"
 )
 
-var addr string
-var reportInterval int
-var pollInterval int
-
-func parseFlags() {
-	flag.StringVar(&addr, "a", "localhost:8080", "agent address")
-	flag.IntVar(&reportInterval, "r", 10, "report interval in seconds")
-	flag.IntVar(&pollInterval, "p", 2, "poll interval in seconds")
+func ParseFlags(config *collector.Config) {
+	flag.StringVar(&config.Addr, "a", "localhost:8080", "agent address")
+	flag.IntVar(&config.ReportInterval, "r", 10, "report interval in seconds")
+	flag.IntVar(&config.PollInterval, "p", 2, "poll interval in seconds")
 	flag.Parse()
 	if envValue := os.Getenv("ADDRESS"); envValue != "" {
-		addr = envValue
+		config.Addr = envValue
 	}
 
-	common.ParseIntEnv("REPORT_INTERVAL", &reportInterval)
+	environment.ParseIntEnv("REPORT_INTERVAL", &config.ReportInterval)
 
-	common.ParseIntEnv("POLL_INTERVAL", &pollInterval)
+	environment.ParseIntEnv("POLL_INTERVAL", &config.PollInterval)
 }
