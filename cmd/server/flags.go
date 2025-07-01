@@ -13,6 +13,7 @@ func ParseFlags(config *keeper.Config) {
 	flag.Int64Var(&config.StoreInterval, "i", 300, "store interval")
 	flag.StringVar(&config.Path, "f", "dump", "file to store data")
 	flag.BoolVar(&config.Restore, "r", true, "restore data")
+	flag.StringVar(&config.Database, "d", "", "database connection string")
 	flag.Parse()
 
 	if envValue := os.Getenv("ADDRESS"); envValue != "" {
@@ -21,6 +22,10 @@ func ParseFlags(config *keeper.Config) {
 
 	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
 		config.LogLevel = envLogLevel
+	}
+
+	if databaseString := os.Getenv("DATABASE_DSN"); databaseString != "" {
+		config.Database = databaseString
 	}
 
 	environment.ParseInt64Env("STORE_INTERVAL", &config.StoreInterval)

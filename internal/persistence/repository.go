@@ -1,6 +1,8 @@
 package persistence
 
-import "github.com/DimKa163/go-metrics/internal/models"
+import (
+	"github.com/DimKa163/go-metrics/internal/models"
+)
 
 type Repository interface {
 	Find(key string) *models.Metric

@@ -1,9 +1,11 @@
 package persistence
 
 import (
+	"context"
 	"errors"
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"io"
 	"sync"
 )
@@ -16,13 +18,14 @@ type StoreOption struct {
 }
 
 type MemStorage struct {
+	pg      *pgxpool.Pool
 	metrics map[string]*models.Metric
 	filer   *files.Filer
 	mutex   *sync.RWMutex
 	option  StoreOption
 }
 
-func NewStore(filer *files.Filer, options StoreOption) (Repository, error) {
+func NewStore(pg *pgxpool.Pool, filer *files.Filer, options StoreOption) (Repository, error) {
 	data := make(map[string]*models.Metric)
 	if options.Restore {
 		metrics, err := filer.Restore()
@@ -36,11 +39,16 @@ func NewStore(filer *files.Filer, options StoreOption) (Repository, error) {
 		}
 	}
 	return &MemStorage{
+		pg:      pg,
 		metrics: data,
 		option:  options,
 		filer:   filer,
 		mutex:   &sync.RWMutex{},
 	}, nil
+}
+
+func (s *MemStorage) Ping(ctx context.Context) error {
+	return s.pg.Ping(ctx)
 }
 
 func (s *MemStorage) Find(key string) *models.Metric {
