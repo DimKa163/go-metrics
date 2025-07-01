@@ -9,6 +9,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/persistence"
 	"github.com/DimKa163/go-metrics/internal/tasks"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"net/http"
 	"os/signal"
@@ -19,6 +20,7 @@ import (
 type ServiceContainer struct {
 	conf             *Config
 	filer            *files.Filer
+	pg               *pgxpool.Pool
 	repository       persistence.Repository
 	metricController controllers.Metrics
 	dumpTask         *tasks.DumpTask
@@ -32,8 +34,12 @@ type Server struct {
 }
 
 func New(config *Config) (*Server, error) {
+	conn, err := pgxpool.New(context.Background(), config.Database)
+	if err != nil {
+		return nil, err
+	}
 	filer := files.NewFiler(config.Path)
-	store, err := persistence.NewStore(filer, persistence.StoreOption{
+	store, err := persistence.NewStore(conn, filer, persistence.StoreOption{
 		UseSYNC: config.StoreInterval == 0,
 		Restore: config.Restore,
 	})
@@ -65,6 +71,12 @@ func New(config *Config) (*Server, error) {
 }
 
 func (s *Server) Map() {
+	s.GET("/ping", func(c *gin.Context) {
+		if err := s.repository.Ping(c.Request.Context()); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+		c.String(http.StatusOK, "pong")
+	})
 	s.GET("/", s.metricController.Home)
 	s.GET("/value/:type/:name", s.metricController.Get)
 	s.POST("/value", s.metricController.GetJSON)

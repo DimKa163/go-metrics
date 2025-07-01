@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/gin-gonic/gin"
@@ -145,6 +146,9 @@ type mockGaugeRepository struct {
 	data map[string]map[string]*models.Metric
 }
 
+func (m *mockGaugeRepository) Ping(_ context.Context) error {
+	return nil
+}
 func (m *mockGaugeRepository) Find(_ string) *models.Metric {
 	return nil
 }
