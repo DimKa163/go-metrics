@@ -56,6 +56,7 @@ func New(config *Config) (*Server, error) {
 	return &Server{
 		ServiceContainer: &ServiceContainer{
 			conf:             config,
+			pg:               conn,
 			filer:            filer,
 			repository:       store,
 			metricController: controllers.NewMetricController(store),
@@ -72,7 +73,7 @@ func New(config *Config) (*Server, error) {
 
 func (s *Server) Map() {
 	s.GET("/ping", func(c *gin.Context) {
-		if err := s.repository.Ping(c.Request.Context()); err != nil {
+		if err := s.pg.Ping(c.Request.Context()); err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 		c.String(http.StatusOK, "pong")
