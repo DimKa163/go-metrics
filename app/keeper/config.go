@@ -6,5 +6,5 @@ type Config struct {
 	StoreInterval int64
 	Restore       bool
 	LogLevel      string
-	Database      string
+	DatabaseDSN   string
 }

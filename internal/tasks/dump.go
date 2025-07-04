@@ -40,7 +40,10 @@ func (task *DumpTask) run(ctx context.Context) error {
 		case <-storeTicker.C:
 			logging.Log.Info("Storing metrics...")
 			startTime := time.Now()
-			metrics := task.repository.GetAll()
+			metrics, err := task.repository.GetAll(ctx)
+			if err != nil {
+				logging.Log.Error("dump task cancelled", zap.Error(err))
+			}
 			if err := task.filer.Dump(metrics); err != nil {
 				logging.Log.Error("Dump with error", zap.Error(err))
 			}
