@@ -1,15 +1,14 @@
 package persistence
 
 import (
+	"context"
 	"github.com/DimKa163/go-metrics/internal/models"
 )
 
 type Repository interface {
-	Find(key string) *models.Metric
+	Find(ctx context.Context, key string) (*models.Metric, error)
 
-	Get(key string) (*models.Metric, error)
+	GetAll(ctx context.Context) ([]models.Metric, error)
 
-	GetAll() []models.Metric
-
-	Upsert(metric *models.Metric) error
+	Upsert(ctx context.Context, metric *models.Metric) error
 }

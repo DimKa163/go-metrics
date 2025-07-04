@@ -7,9 +7,11 @@ import (
 	"github.com/DimKa163/go-metrics/internal/mhttp/controllers"
 	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
 	"github.com/DimKa163/go-metrics/internal/persistence"
+	"github.com/DimKa163/go-metrics/internal/persistence/mem"
+	"github.com/DimKa163/go-metrics/internal/persistence/pg"
 	"github.com/DimKa163/go-metrics/internal/tasks"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 	"net/http"
 	"os/signal"
@@ -20,7 +22,7 @@ import (
 type ServiceContainer struct {
 	conf             *Config
 	filer            *files.Filer
-	pg               *pgxpool.Pool
+	pg               *pgx.Conn
 	repository       persistence.Repository
 	metricController controllers.Metrics
 	dumpTask         *tasks.DumpTask
@@ -31,22 +33,36 @@ type Server struct {
 	*http.Server
 	*ServiceContainer
 	useDumpASYNC bool
+	useBackup    bool
 }
 
 func New(config *Config) (*Server, error) {
-	conn, err := pgxpool.New(context.Background(), config.Database)
-	if err != nil {
-		return nil, err
-	}
+	var repository persistence.Repository
+	var err error
+	var pgConnection *pgx.Conn
+	var useDumpASYNC bool
+	var useBackup bool
 	filer := files.NewFiler(config.Path)
-	store, err := persistence.NewStore(conn, filer, persistence.StoreOption{
-		UseSYNC: config.StoreInterval == 0,
-		Restore: config.Restore,
-	})
-	if err != nil {
-		return nil, err
+
+	if config.DatabaseDSN != "" {
+		pgConnection, err = pgx.Connect(context.Background(), config.DatabaseDSN)
+		if err != nil {
+			return nil, err
+		}
+		repository, err = pg.NewStore(pgConnection)
+	} else {
+		repository, err = mem.NewStore(filer, mem.StoreOption{
+			UseSYNC: config.StoreInterval == 0,
+			Restore: config.Restore,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+		useDumpASYNC = config.StoreInterval > 0
+		useBackup = true
 	}
-	if err := logging.Initialize(config.LogLevel); err != nil {
+	if err = logging.Initialize(config.LogLevel); err != nil {
 		return nil, err
 	}
 	router := gin.New()
@@ -56,25 +72,28 @@ func New(config *Config) (*Server, error) {
 	return &Server{
 		ServiceContainer: &ServiceContainer{
 			conf:             config,
-			pg:               conn,
+			pg:               pgConnection,
 			filer:            filer,
-			repository:       store,
-			metricController: controllers.NewMetricController(store),
-			dumpTask:         tasks.NewDumpTask(store, filer, time.Duration(config.StoreInterval)*time.Second),
+			repository:       repository,
+			metricController: controllers.NewMetricController(repository),
+			dumpTask:         tasks.NewDumpTask(repository, filer, time.Duration(config.StoreInterval)*time.Second),
 		},
 		Server: &http.Server{
 			Addr:    config.Addr,
 			Handler: router.Handler(),
 		},
-		useDumpASYNC: config.StoreInterval > 0,
+		useDumpASYNC: useDumpASYNC,
 		Engine:       router,
+		useBackup:    useBackup,
 	}, nil
 }
 
 func (s *Server) Map() {
 	s.GET("/ping", func(c *gin.Context) {
-		if err := s.pg.Ping(c.Request.Context()); err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+		if s.pg != nil {
+			if err := s.pg.Ping(c); err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+			}
 		}
 		c.String(http.StatusOK, "pong")
 	})
@@ -93,17 +112,23 @@ func (s *Server) Run() error {
 	}
 	go func() {
 		<-ctx.Done()
-		if err := s.backup(); err != nil {
-			logging.Log.Error("backup failed", zap.Error(err))
-		}
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
+		if s.useBackup {
+			if err := s.backup(timeoutCtx); err != nil {
+				logging.Log.Error("backup failed", zap.Error(err))
+			}
+		}
 		_ = s.Server.Shutdown(timeoutCtx)
 	}()
 	return s.ListenAndServe()
 }
 
-func (s *Server) backup() error {
+func (s *Server) backup(ctx context.Context) error {
 	logging.Log.Debug("start backup before shutdown")
-	return s.filer.Dump(s.repository.GetAll())
+	m, err := s.repository.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+	return s.filer.Dump(m)
 }

@@ -1,31 +1,27 @@
-package persistence
+package mem
 
 import (
 	"context"
 	"errors"
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"io"
 	"sync"
 )
-
-var ErrValueNotFound = errors.New("value not found")
 
 type StoreOption struct {
 	Restore bool
 	UseSYNC bool
 }
 
-type MemStorage struct {
-	pg      *pgxpool.Pool
+type MemoryStore struct {
 	metrics map[string]*models.Metric
 	filer   *files.Filer
 	mutex   *sync.RWMutex
 	option  StoreOption
 }
 
-func NewStore(pg *pgxpool.Pool, filer *files.Filer, options StoreOption) (Repository, error) {
+func NewStore(filer *files.Filer, options StoreOption) (*MemoryStore, error) {
 	data := make(map[string]*models.Metric)
 	if options.Restore {
 		metrics, err := filer.Restore()
@@ -38,8 +34,7 @@ func NewStore(pg *pgxpool.Pool, filer *files.Filer, options StoreOption) (Reposi
 			data[metric.ID] = &metric
 		}
 	}
-	return &MemStorage{
-		pg:      pg,
+	return &MemoryStore{
 		metrics: data,
 		option:  options,
 		filer:   filer,
@@ -47,40 +42,27 @@ func NewStore(pg *pgxpool.Pool, filer *files.Filer, options StoreOption) (Reposi
 	}, nil
 }
 
-func (s *MemStorage) Ping(ctx context.Context) error {
-	return s.pg.Ping(ctx)
-}
-
-func (s *MemStorage) Find(key string) *models.Metric {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-	if val, ok := s.metrics[key]; ok {
-		return val
-	}
-	return nil
-}
-
-func (s *MemStorage) Get(key string) (*models.Metric, error) {
+func (s *MemoryStore) Find(_ context.Context, key string) (*models.Metric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	if val, ok := s.metrics[key]; ok {
 		return val, nil
 	}
-	return nil, ErrValueNotFound
+	return nil, nil
 }
 
-func (s *MemStorage) GetAll() []models.Metric {
+func (s *MemoryStore) GetAll(_ context.Context) ([]models.Metric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	var result []models.Metric
 	for _, metric := range s.metrics {
 		result = append(result, *metric)
 	}
-	return result
+	return result, nil
 
 }
 
-func (s *MemStorage) Upsert(metric *models.Metric) error {
+func (s *MemoryStore) Upsert(_ context.Context, metric *models.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	delete(s.metrics, metric.ID)
