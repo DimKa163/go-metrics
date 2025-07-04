@@ -50,6 +50,9 @@ func New(config *Config) (*Server, error) {
 			return nil, err
 		}
 		repository, err = pg.NewStore(pgConnection)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		repository, err = mem.NewStore(filer, mem.StoreOption{
 			UseSYNC: config.StoreInterval == 0,

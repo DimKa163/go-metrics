@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
@@ -19,7 +18,7 @@ type Store struct {
 }
 
 func NewStore(pgx *pgx.Conn) (*Store, error) {
-	if err := migrateDb(pgx); err != nil {
+	if err := migrateDB(pgx); err != nil {
 		return nil, err
 	}
 	return &Store{
@@ -79,18 +78,18 @@ func (s *Store) GetAll(ctx context.Context) ([]models.Metric, error) {
 func (s *Store) Upsert(ctx context.Context, metric *models.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	deleteSql := "DELETE FROM metrics WHERE id = $1;"
-	if _, err := s.Exec(ctx, deleteSql, metric.ID); err != nil {
+	deleteSQL := "DELETE FROM metrics WHERE id = $1;"
+	if _, err := s.Exec(ctx, deleteSQL, metric.ID); err != nil {
 		return err
 	}
-	insertSql := "INSERT INTO metrics (id, type, delta, value) VALUES ($1, $2, $3, $4);"
-	if _, err := s.Exec(ctx, insertSql, metric.ID, metric.Type, metric.Delta, metric.Value); err != nil {
+	insertSQL := "INSERT INTO metrics (id, type, delta, value) VALUES ($1, $2, $3, $4);"
+	if _, err := s.Exec(ctx, insertSQL, metric.ID, metric.Type, metric.Delta, metric.Value); err != nil {
 		return err
 	}
 	return nil
 }
 
-func migrateDb(pgx *pgx.Conn) error {
+func migrateDB(pgx *pgx.Conn) error {
 	var err error
 	db, err := sql.Open("postgres", pgx.Config().ConnString())
 	if err != nil {
