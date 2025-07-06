@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
-	"sync"
 )
 
 type Metrics interface {
@@ -26,13 +25,11 @@ type Metrics interface {
 
 type metrics struct {
 	repository persistence.Repository
-	mutex      *sync.RWMutex
 }
 
 func NewMetricController(repository persistence.Repository) Metrics {
 	return &metrics{
 		repository: repository,
-		mutex:      &sync.RWMutex{},
 	}
 }
 func (m *metrics) GetJSON(context *gin.Context) {
@@ -90,19 +87,33 @@ func (m *metrics) Home(context *gin.Context) {
 }
 
 func (m *metrics) UpdatesJSON(context *gin.Context) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	var metricList []models.Metric
 	var err error
 	if err = context.ShouldBindJSON(&metricList); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	for i, metric := range metricList {
+	mapMetric := make(map[string]models.Metric)
+	for _, metric := range metricList {
 		if err = models.ValidateMetric(&metric); err != nil {
 			context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		it, ok := mapMetric[metric.ID]
+		if ok {
+			switch it.Type {
+			case models.GaugeType:
+				mapMetric[metric.ID] = metric
+			case models.CounterType:
+				*it.Delta = *metric.Delta + *it.Delta
+				mapMetric[metric.ID] = it
+			}
+			continue
+		}
+		mapMetric[metric.ID] = metric
+	}
+	resultList := make([]models.Metric, 0)
+	for _, metric := range mapMetric {
 		existingMetric, err := m.repository.Find(context, metric.ID)
 		if err != nil {
 			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -112,13 +123,14 @@ func (m *metrics) UpdatesJSON(context *gin.Context) {
 			existingMetric = &metric
 			logging.Log.Info("inserting metric",
 				zap.Any("metric", existingMetric))
+
 		} else {
 			logging.Log.Info("updating metric", zap.Any("metric", metric))
 			existingMetric.Update(&metric)
 		}
-		metricList[i] = *existingMetric
+		resultList = append(resultList, *existingMetric)
 	}
-	if err = m.repository.BatchUpsert(context, metricList); err != nil {
+	if err = m.repository.BatchUpsert(context, resultList); err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
