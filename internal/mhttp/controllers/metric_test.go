@@ -158,3 +158,7 @@ func (m *mockGaugeRepository) GetAll(_ context.Context) ([]models.Metric, error)
 func (m *mockGaugeRepository) Upsert(_ context.Context, _ *models.Metric) error {
 	return nil
 }
+
+func (m *mockGaugeRepository) BatchUpsert(_ context.Context, _ []models.Metric) error {
+	return nil
+}

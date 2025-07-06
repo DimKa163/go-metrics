@@ -14,6 +14,8 @@ type Metrics interface {
 
 	UpdateJSON(context *gin.Context)
 
+	UpdatesJSON(context *gin.Context)
+
 	Update(context *gin.Context)
 
 	Get(context *gin.Context)
@@ -25,6 +27,11 @@ type metrics struct {
 	repository persistence.Repository
 }
 
+func NewMetricController(repository persistence.Repository) Metrics {
+	return &metrics{
+		repository: repository,
+	}
+}
 func (m *metrics) GetJSON(context *gin.Context) {
 	var model models.Metric
 	if err := context.ShouldBindJSON(&model); err != nil {
@@ -49,12 +56,6 @@ func (m *metrics) GetJSON(context *gin.Context) {
 		context.JSON(http.StatusOK, metric)
 	default:
 		context.JSON(http.StatusNotFound, "")
-	}
-}
-
-func NewMetricController(repository persistence.Repository) Metrics {
-	return &metrics{
-		repository: repository,
 	}
 }
 
@@ -83,6 +84,27 @@ func (m *metrics) Home(context *gin.Context) {
 	context.HTML(http.StatusOK, "home.tmpl", gin.H{
 		"metrics": viewData,
 	})
+}
+
+func (m *metrics) UpdatesJSON(context *gin.Context) {
+	var metricList []models.Metric
+	var err error
+	if err = context.ShouldBindJSON(&metricList); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	for _, metric := range metricList {
+		if err = models.ValidateMetric(&metric); err != nil {
+			context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	if err = m.repository.BatchUpsert(context, metricList); err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.Writer.Header().Set("Content-Type", "application/json")
+	context.Status(http.StatusOK)
 }
 
 func (m *metrics) UpdateJSON(context *gin.Context) {
