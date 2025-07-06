@@ -89,6 +89,35 @@ func (s *Store) Upsert(ctx context.Context, metric *models.Metric) error {
 	return nil
 }
 
+func (s *Store) BatchUpsert(ctx context.Context, metrics []models.Metric) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	var err error
+	tx, err := s.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func(tx pgx.Tx, ctx context.Context) {
+		_ = tx.Rollback(ctx)
+	}(tx, ctx)
+
+	deleteSQL := "DELETE FROM metrics WHERE id = $1;"
+	insertSQL := "INSERT INTO metrics (id, type, delta, value) VALUES ($1, $2, $3, $4);"
+	for _, metric := range metrics {
+		if _, err = tx.Exec(ctx, deleteSQL, metric.ID); err != nil {
+			return err
+		}
+		if _, err = tx.Exec(ctx, insertSQL, metric.ID, metric.Type, metric.Delta, metric.Value); err != nil {
+			return err
+		}
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func migrateDB(pgx *pgx.Conn) error {
 	var err error
 	db, err := sql.Open("postgres", pgx.Config().ConnString())

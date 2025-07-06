@@ -11,4 +11,6 @@ type Repository interface {
 	GetAll(ctx context.Context) ([]models.Metric, error)
 
 	Upsert(ctx context.Context, metric *models.Metric) error
+
+	BatchUpsert(ctx context.Context, metrics []models.Metric) error
 }
