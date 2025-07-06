@@ -93,10 +93,25 @@ func (m *metrics) UpdatesJSON(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	for _, metric := range metricList {
+	for i, metric := range metricList {
 		if err = models.ValidateMetric(&metric); err != nil {
 			context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
+		}
+		existingMetric, err := m.repository.Find(context, metric.ID)
+		if err != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		if existingMetric == nil {
+			existingMetric = &metric
+			logging.Log.Info("inserting metric",
+				zap.Any("metric", existingMetric))
+
+		} else {
+			logging.Log.Info("updating metric", zap.Any("metric", metric))
+			metric.Update(existingMetric)
+			metricList[i] = metric
 		}
 	}
 	if err = m.repository.BatchUpsert(context, metricList); err != nil {

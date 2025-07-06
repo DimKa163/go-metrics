@@ -70,9 +70,9 @@ func (s *Collector) Run() error {
 			count++
 		case <-reportTicker.C:
 			var metrics []*models.Metric
-			for k, v := range values {
-				metrics = append(metrics, models.CreateGauge(k, v))
-			}
+			//for k, v := range values {
+			//	metrics = append(metrics, models.CreateGauge(k, v))
+			//}
 			metrics = append(metrics, models.CreateCounter("PollCount", count))
 			if err := cl.BatchUpdate(metrics); err != nil {
 				fmt.Println(err)
