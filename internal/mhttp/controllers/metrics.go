@@ -107,12 +107,11 @@ func (m *metrics) UpdatesJSON(context *gin.Context) {
 			existingMetric = &metric
 			logging.Log.Info("inserting metric",
 				zap.Any("metric", existingMetric))
-
 		} else {
 			logging.Log.Info("updating metric", zap.Any("metric", metric))
-			metric.Update(existingMetric)
-			metricList[i] = metric
+			existingMetric.Update(&metric)
 		}
+		metricList[i] = *existingMetric
 	}
 	if err = m.repository.BatchUpsert(context, metricList); err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
