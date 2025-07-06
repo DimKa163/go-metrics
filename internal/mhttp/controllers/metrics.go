@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
+	"sync"
 )
 
 type Metrics interface {
@@ -25,11 +26,13 @@ type Metrics interface {
 
 type metrics struct {
 	repository persistence.Repository
+	mutex      *sync.RWMutex
 }
 
 func NewMetricController(repository persistence.Repository) Metrics {
 	return &metrics{
 		repository: repository,
+		mutex:      &sync.RWMutex{},
 	}
 }
 func (m *metrics) GetJSON(context *gin.Context) {
@@ -87,6 +90,8 @@ func (m *metrics) Home(context *gin.Context) {
 }
 
 func (m *metrics) UpdatesJSON(context *gin.Context) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	var metricList []models.Metric
 	var err error
 	if err = context.ShouldBindJSON(&metricList); err != nil {
