@@ -29,14 +29,11 @@ func (rt *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		if err != nil {
 			return nil, backoff.Permanent(err)
 		}
-		if attempt > len(times)-1 {
-			return nil, backoff.Permanent(err)
-		}
 		if err = rt.drain(response); err != nil {
 			return nil, backoff.Permanent(err)
 		}
 
-		if rt.shouldRetry(response) {
+		if rt.shouldRetry(response) && attempt < len(times) {
 			if req.Body != nil {
 				req.Body = io.NopCloser(bytes.NewBuffer(body))
 			}
