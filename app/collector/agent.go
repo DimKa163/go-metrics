@@ -6,6 +6,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/client"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"math/rand"
+	"net/http"
 	"os/signal"
 	"runtime"
 	"syscall"
@@ -25,7 +26,9 @@ func (s *Collector) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	var count int64
-	cl := client.NewClient(fmt.Sprintf("http://%s", s.Addr))
+	cl := client.NewClient(fmt.Sprintf("http://%s", s.Addr), func(transport http.RoundTripper) http.RoundTripper {
+		return client.NewRetryRoundTripper(transport)
+	})
 	pollTicker := time.NewTicker(time.Duration(s.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(s.ReportInterval) * time.Second)
 	values := make(map[string]float64)

@@ -2,23 +2,27 @@ package files
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/cenkalti/backoff/v5"
 	"os"
 )
 
 type Filer struct {
-	path string
+	path     string
+	attempts []int
 }
 
-func NewFiler(path string) *Filer {
+func NewFiler(path string, attempts []int) *Filer {
 	return &Filer{
-		path: path,
+		path:     path,
+		attempts: attempts,
 	}
 }
 
 func (f *Filer) Restore() ([]models.Metric, error) {
-	file, err := os.OpenFile(f.path, os.O_CREATE|os.O_RDWR, 0755)
+	file, err := f.openFile(os.O_CREATE | os.O_RDWR)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +38,7 @@ func (f *Filer) Restore() ([]models.Metric, error) {
 }
 
 func (f *Filer) Dump(metrics []models.Metric) error {
-	file, err := os.OpenFile(f.path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	file, err := f.openFile(os.O_CREATE | os.O_WRONLY | os.O_TRUNC)
 	if err != nil {
 		return err
 	}
@@ -51,4 +55,21 @@ func (f *Filer) Dump(metrics []models.Metric) error {
 		return err
 	}
 	return nil
+}
+
+func (f *Filer) openFile(flag int) (*os.File, error) {
+	seconds := f.attempts
+	attempt := 0
+	return backoff.Retry(context.Background(), func() (*os.File, error) {
+		file, err := os.OpenFile(f.path, flag, 0644)
+		if err != nil {
+			if attempt > len(seconds)-1 {
+				return nil, backoff.Permanent(err)
+			}
+			at := attempt
+			attempt++
+			return nil, backoff.RetryAfter(seconds[at])
+		}
+		return file, nil
+	})
 }

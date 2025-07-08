@@ -149,10 +149,25 @@ func (m *metrics) UpdateJSON(context *gin.Context) {
 		return
 	}
 	context.Writer.Header().Set("Content-Type", "application/json")
-	existingMetric, err := m.repository.Find(context, metric.ID)
+	met, err := m.processMetric(context, metric)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	err = m.repository.Upsert(context, met)
+	if err != nil {
+		context.Writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	context.JSON(http.StatusOK, met)
+}
+
+func (m *metrics) processMetric(context *gin.Context, metric models.Metric) (*models.Metric, error) {
+	existingMetric, err := m.repository.Find(context, metric.ID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return nil, err
 	}
 	if existingMetric == nil {
 		existingMetric = &metric
@@ -163,38 +178,22 @@ func (m *metrics) UpdateJSON(context *gin.Context) {
 		logging.Log.Info("updating metric", zap.Any("metric", metric))
 		existingMetric.Update(&metric)
 	}
-	err = m.repository.Upsert(context, existingMetric)
-	if err != nil {
-		context.Writer.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	context.JSON(http.StatusOK, existingMetric)
+	return existingMetric, nil
 }
 func (m *metrics) Update(context *gin.Context) {
 	t := context.Param("type")
-	if t != models.CounterType && t != models.GaugeType {
+	name := context.Param("name")
+	value := context.Param("value")
+	metric, err := models.CreateMetric(t, name, value)
+	if err != nil {
 		context.Writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	name := context.Param("name")
-	var metric *models.Metric
 	context.Writer.Header().Set("Content-Type", "text/plain")
-	metric, err := m.repository.Find(context, name)
+	metric, err = m.processMetric(context, *metric)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-	if metric == nil {
-		if metric, err = models.CreateMetric(t, name, context.Param("value")); err != nil {
-			context.Writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	} else {
-		err = models.Update(metric, context.Param("value"))
-		if err != nil {
-			context.Writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
 	}
 	err = m.repository.Upsert(context, metric)
 	if err != nil {

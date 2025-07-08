@@ -22,10 +22,17 @@ type metricClient struct {
 	addr   string
 }
 
-func NewClient(addr string) MetricClient {
+func NewClient(addr string, transports ...func(transport http.RoundTripper) http.RoundTripper) MetricClient {
+	var transport http.RoundTripper
+	defaultTransport := &http.Transport{}
+	transport = defaultTransport
+	for _, t := range transports {
+		transport = t(transport)
+	}
 	return &metricClient{
 		client: http.Client{
-			Timeout: 30 * time.Second,
+			Transport: transport,
+			Timeout:   30 * time.Second,
 		},
 		addr: addr,
 	}

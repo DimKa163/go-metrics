@@ -11,7 +11,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/persistence/pg"
 	"github.com/DimKa163/go-metrics/internal/tasks"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"net/http"
 	"os/signal"
@@ -22,7 +22,7 @@ import (
 type ServiceContainer struct {
 	conf             *Config
 	filer            *files.Filer
-	pg               *pgx.Conn
+	pg               *pgxpool.Pool
 	repository       persistence.Repository
 	metricController controllers.Metrics
 	dumpTask         *tasks.DumpTask
@@ -39,17 +39,18 @@ type Server struct {
 func New(config *Config) (*Server, error) {
 	var repository persistence.Repository
 	var err error
-	var pgConnection *pgx.Conn
+	var pgConnection *pgxpool.Pool
 	var useDumpASYNC bool
 	var useBackup bool
-	filer := files.NewFiler(config.Path)
+	attempts := []int{1, 3, 5}
+	filer := files.NewFiler(config.Path, attempts)
 
 	if config.DatabaseDSN != "" {
-		pgConnection, err = pgx.Connect(context.Background(), config.DatabaseDSN)
+		pgConnection, err = pgxpool.New(context.Background(), config.DatabaseDSN)
 		if err != nil {
 			return nil, err
 		}
-		repository, err = pg.NewStore(pgConnection)
+		repository, err = pg.NewStore(pgConnection, attempts)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +130,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) backup(ctx context.Context) error {
-	logging.Log.Debug("start backup before shutdown")
+	logging.Log.Info("start backup before shutdown")
 	m, err := s.repository.GetAll(ctx)
 	if err != nil {
 		return err
