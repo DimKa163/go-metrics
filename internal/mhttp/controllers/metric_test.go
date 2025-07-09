@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/gin-gonic/gin"
@@ -145,15 +146,19 @@ type mockGaugeRepository struct {
 	data map[string]map[string]*models.Metric
 }
 
-func (m *mockGaugeRepository) Find(_ string) *models.Metric {
+func (m *mockGaugeRepository) Ping(_ context.Context) error {
 	return nil
 }
-func (m *mockGaugeRepository) Get(_ string) (*models.Metric, error) {
+func (m *mockGaugeRepository) Find(_ context.Context, _ string) (*models.Metric, error) {
 	return nil, nil
 }
-func (m *mockGaugeRepository) GetAll() []models.Metric {
-	return make([]models.Metric, 0)
+func (m *mockGaugeRepository) GetAll(_ context.Context) ([]models.Metric, error) {
+	return make([]models.Metric, 0), nil
 }
-func (m *mockGaugeRepository) Upsert(_ *models.Metric) error {
+func (m *mockGaugeRepository) Upsert(_ context.Context, _ *models.Metric) error {
+	return nil
+}
+
+func (m *mockGaugeRepository) BatchUpsert(_ context.Context, _ []models.Metric) error {
 	return nil
 }

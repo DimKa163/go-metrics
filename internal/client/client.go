@@ -13,6 +13,8 @@ import (
 type MetricClient interface {
 	UpdateGauge(name string, value float64) error
 	UpdateCounter(name string, value int64) error
+
+	BatchUpdate(metrics []*models.Metric) error
 }
 
 type metricClient struct {
@@ -20,10 +22,17 @@ type metricClient struct {
 	addr   string
 }
 
-func NewClient(addr string) MetricClient {
+func NewClient(addr string, transports ...func(transport http.RoundTripper) http.RoundTripper) MetricClient {
+	var transport http.RoundTripper
+	defaultTransport := &http.Transport{}
+	transport = defaultTransport
+	for _, t := range transports {
+		transport = t(transport)
+	}
 	return &metricClient{
 		client: http.Client{
-			Timeout: 30 * time.Second,
+			Transport: transport,
+			Timeout:   30 * time.Second,
 		},
 		addr: addr,
 	}
@@ -72,10 +81,53 @@ func (c *metricClient) UpdateCounter(name string, value int64) error {
 	return nil
 }
 
+func (c *metricClient) BatchUpdate(metrics []*models.Metric) error {
+	req, err := c.createBatchRequest(metrics)
+	if err != nil {
+		return err
+	}
+	res, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	return nil
+}
+
 func (c *metricClient) createRequest(metric *models.Metric) (*http.Request, error) {
 	fullAddr := fmt.Sprintf("%s/update", c.addr)
 
 	data, err := json.Marshal(metric)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := bytes.NewBuffer(nil)
+
+	err = compress(data, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fullAddr, buffer)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Encoding", "gzip")
+
+	req.Header.Add("Content-Type", "application/json")
+	return req, nil
+}
+
+func (c *metricClient) createBatchRequest(metrics []*models.Metric) (*http.Request, error) {
+	fullAddr := fmt.Sprintf("%s/updates", c.addr)
+
+	data, err := json.Marshal(metrics)
 	if err != nil {
 		return nil, err
 	}

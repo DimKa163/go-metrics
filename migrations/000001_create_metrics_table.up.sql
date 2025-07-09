@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS metrics(
+    id VARCHAR(25) PRIMARY KEY,
+    type VARCHAR(25),
+    value DOUBLE PRECISION NULL,
+    delta BIGINT NULL
+)

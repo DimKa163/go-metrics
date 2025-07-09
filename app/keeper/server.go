@@ -7,8 +7,11 @@ import (
 	"github.com/DimKa163/go-metrics/internal/mhttp/controllers"
 	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
 	"github.com/DimKa163/go-metrics/internal/persistence"
+	"github.com/DimKa163/go-metrics/internal/persistence/mem"
+	"github.com/DimKa163/go-metrics/internal/persistence/pg"
 	"github.com/DimKa163/go-metrics/internal/tasks"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"net/http"
 	"os/signal"
@@ -19,6 +22,7 @@ import (
 type ServiceContainer struct {
 	conf             *Config
 	filer            *files.Filer
+	pg               *pgxpool.Pool
 	repository       persistence.Repository
 	metricController controllers.Metrics
 	dumpTask         *tasks.DumpTask
@@ -29,18 +33,40 @@ type Server struct {
 	*http.Server
 	*ServiceContainer
 	useDumpASYNC bool
+	useBackup    bool
 }
 
 func New(config *Config) (*Server, error) {
-	filer := files.NewFiler(config.Path)
-	store, err := persistence.NewStore(filer, persistence.StoreOption{
-		UseSYNC: config.StoreInterval == 0,
-		Restore: config.Restore,
-	})
-	if err != nil {
-		return nil, err
+	var repository persistence.Repository
+	var err error
+	var pgConnection *pgxpool.Pool
+	var useDumpASYNC bool
+	var useBackup bool
+	attempts := []int{1, 3, 5}
+	filer := files.NewFiler(config.Path, attempts)
+
+	if config.DatabaseDSN != "" {
+		pgConnection, err = pgxpool.New(context.Background(), config.DatabaseDSN)
+		if err != nil {
+			return nil, err
+		}
+		repository, err = pg.NewStore(pgConnection, attempts)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		repository, err = mem.NewStore(filer, mem.StoreOption{
+			UseSYNC: config.StoreInterval == 0,
+			Restore: config.Restore,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+		useDumpASYNC = config.StoreInterval > 0
+		useBackup = true
 	}
-	if err := logging.Initialize(config.LogLevel); err != nil {
+	if err = logging.Initialize(config.LogLevel); err != nil {
 		return nil, err
 	}
 	router := gin.New()
@@ -50,26 +76,37 @@ func New(config *Config) (*Server, error) {
 	return &Server{
 		ServiceContainer: &ServiceContainer{
 			conf:             config,
+			pg:               pgConnection,
 			filer:            filer,
-			repository:       store,
-			metricController: controllers.NewMetricController(store),
-			dumpTask:         tasks.NewDumpTask(store, filer, time.Duration(config.StoreInterval)*time.Second),
+			repository:       repository,
+			metricController: controllers.NewMetricController(repository),
+			dumpTask:         tasks.NewDumpTask(repository, filer, time.Duration(config.StoreInterval)*time.Second),
 		},
 		Server: &http.Server{
 			Addr:    config.Addr,
 			Handler: router.Handler(),
 		},
-		useDumpASYNC: config.StoreInterval > 0,
+		useDumpASYNC: useDumpASYNC,
 		Engine:       router,
+		useBackup:    useBackup,
 	}, nil
 }
 
 func (s *Server) Map() {
+	s.GET("/ping", func(c *gin.Context) {
+		if s.pg != nil {
+			if err := s.pg.Ping(c); err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+			}
+		}
+		c.String(http.StatusOK, "pong")
+	})
 	s.GET("/", s.metricController.Home)
 	s.GET("/value/:type/:name", s.metricController.Get)
 	s.POST("/value", s.metricController.GetJSON)
 	s.POST("/update/:type/:name/:value", s.metricController.Update)
 	s.POST("/update", s.metricController.UpdateJSON)
+	s.POST("/updates", s.metricController.UpdatesJSON)
 }
 
 func (s *Server) Run() error {
@@ -80,17 +117,23 @@ func (s *Server) Run() error {
 	}
 	go func() {
 		<-ctx.Done()
-		if err := s.backup(); err != nil {
-			logging.Log.Error("backup failed", zap.Error(err))
-		}
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
+		if s.useBackup {
+			if err := s.backup(timeoutCtx); err != nil {
+				logging.Log.Error("backup failed", zap.Error(err))
+			}
+		}
 		_ = s.Server.Shutdown(timeoutCtx)
 	}()
 	return s.ListenAndServe()
 }
 
-func (s *Server) backup() error {
-	logging.Log.Debug("start backup before shutdown")
-	return s.filer.Dump(s.repository.GetAll())
+func (s *Server) backup(ctx context.Context) error {
+	logging.Log.Info("start backup before shutdown")
+	m, err := s.repository.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+	return s.filer.Dump(m)
 }

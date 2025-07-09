@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/client"
+	"github.com/DimKa163/go-metrics/internal/models"
 	"math/rand"
+	"net/http"
 	"os/signal"
 	"runtime"
 	"syscall"
@@ -24,7 +26,9 @@ func (s *Collector) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	var count int64
-	cl := client.NewClient(fmt.Sprintf("http://%s", s.Addr))
+	cl := client.NewClient(fmt.Sprintf("http://%s", s.Addr), func(transport http.RoundTripper) http.RoundTripper {
+		return client.NewRetryRoundTripper(transport)
+	})
 	pollTicker := time.NewTicker(time.Duration(s.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(s.ReportInterval) * time.Second)
 	values := make(map[string]float64)
@@ -68,18 +72,15 @@ func (s *Collector) Run() error {
 			values["RandomValue"] = rand.Float64()
 			count++
 		case <-reportTicker.C:
+			var metrics []*models.Metric
 			for k, v := range values {
-				execute(cl.UpdateGauge, k, v)
+				metrics = append(metrics, models.CreateGauge(k, v))
 			}
-			execute(cl.UpdateCounter, "PollCount", count)
+			metrics = append(metrics, models.CreateCounter("PollCount", count))
+			if err := cl.BatchUpdate(metrics); err != nil {
+				fmt.Println(err)
+			}
 
 		}
-	}
-}
-
-func execute[T float64 | int64](handler func(name string, value T) error, name string, value T) {
-	err := handler(name, value)
-	if err != nil {
-		fmt.Println(err)
 	}
 }

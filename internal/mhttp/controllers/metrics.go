@@ -14,6 +14,8 @@ type Metrics interface {
 
 	UpdateJSON(context *gin.Context)
 
+	UpdatesJSON(context *gin.Context)
+
 	Update(context *gin.Context)
 
 	Get(context *gin.Context)
@@ -25,13 +27,22 @@ type metrics struct {
 	repository persistence.Repository
 }
 
+func NewMetricController(repository persistence.Repository) Metrics {
+	return &metrics{
+		repository: repository,
+	}
+}
 func (m *metrics) GetJSON(context *gin.Context) {
 	var model models.Metric
 	if err := context.ShouldBindJSON(&model); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	metric := m.repository.Find(model.ID)
+	metric, err := m.repository.Find(context.Request.Context(), model.ID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	if metric == nil {
 		logging.Log.Info("metric not found", zap.Any("metric", model))
 		context.JSON(http.StatusNotFound, "")
@@ -48,16 +59,14 @@ func (m *metrics) GetJSON(context *gin.Context) {
 	}
 }
 
-func NewMetricController(repository persistence.Repository) Metrics {
-	return &metrics{
-		repository: repository,
-	}
-}
-
 func (m *metrics) Home(context *gin.Context) {
-	metrics := m.repository.GetAll()
-	viewData := make([]metricView, len(metrics))
-	for _, metric := range metrics {
+	met, err := m.repository.GetAll(context)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	viewData := make([]metricView, len(met))
+	for _, metric := range met {
 		switch metric.Type {
 		case models.GaugeType:
 			viewData = append(viewData, metricView{
@@ -77,6 +86,58 @@ func (m *metrics) Home(context *gin.Context) {
 	})
 }
 
+func (m *metrics) UpdatesJSON(context *gin.Context) {
+	var metricList []models.Metric
+	var err error
+	if err = context.ShouldBindJSON(&metricList); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	mapMetric := make(map[string]models.Metric)
+	for _, metric := range metricList {
+		if err = models.ValidateMetric(&metric); err != nil {
+			context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		it, ok := mapMetric[metric.ID]
+		if ok {
+			switch it.Type {
+			case models.GaugeType:
+				mapMetric[metric.ID] = metric
+			case models.CounterType:
+				*it.Delta = *metric.Delta + *it.Delta
+				mapMetric[metric.ID] = it
+			}
+			continue
+		}
+		mapMetric[metric.ID] = metric
+	}
+	resultList := make([]models.Metric, 0)
+	for _, metric := range mapMetric {
+		existingMetric, err := m.repository.Find(context, metric.ID)
+		if err != nil {
+			context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		if existingMetric == nil {
+			existingMetric = &metric
+			logging.Log.Info("inserting metric",
+				zap.Any("metric", existingMetric))
+
+		} else {
+			logging.Log.Info("updating metric", zap.Any("metric", metric))
+			existingMetric.Update(&metric)
+		}
+		resultList = append(resultList, *existingMetric)
+	}
+	if err = m.repository.BatchUpsert(context, resultList); err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.Writer.Header().Set("Content-Type", "application/json")
+	context.Status(http.StatusOK)
+}
+
 func (m *metrics) UpdateJSON(context *gin.Context) {
 	var metric models.Metric
 	if err := context.ShouldBindJSON(&metric); err != nil {
@@ -88,7 +149,26 @@ func (m *metrics) UpdateJSON(context *gin.Context) {
 		return
 	}
 	context.Writer.Header().Set("Content-Type", "application/json")
-	existingMetric := m.repository.Find(metric.ID)
+	met, err := m.processMetric(context, metric)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = m.repository.Upsert(context, met)
+	if err != nil {
+		context.Writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	context.JSON(http.StatusOK, met)
+}
+
+func (m *metrics) processMetric(context *gin.Context, metric models.Metric) (*models.Metric, error) {
+	existingMetric, err := m.repository.Find(context, metric.ID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return nil, err
+	}
 	if existingMetric == nil {
 		existingMetric = &metric
 		logging.Log.Info("inserting metric",
@@ -98,37 +178,24 @@ func (m *metrics) UpdateJSON(context *gin.Context) {
 		logging.Log.Info("updating metric", zap.Any("metric", metric))
 		existingMetric.Update(&metric)
 	}
-	err := m.repository.Upsert(existingMetric)
-	if err != nil {
-		context.Writer.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	context.JSON(http.StatusOK, existingMetric)
+	return existingMetric, nil
 }
 func (m *metrics) Update(context *gin.Context) {
 	t := context.Param("type")
-	if t != models.CounterType && t != models.GaugeType {
+	name := context.Param("name")
+	value := context.Param("value")
+	metric, err := models.CreateMetric(t, name, value)
+	if err != nil {
 		context.Writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	name := context.Param("name")
-	var metric *models.Metric
 	context.Writer.Header().Set("Content-Type", "text/plain")
-	metric = m.repository.Find(name)
-	if metric == nil {
-		var err error
-		if metric, err = models.CreateMetric(t, name, context.Param("value")); err != nil {
-			context.Writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	} else {
-		err := models.Update(metric, context.Param("value"))
-		if err != nil {
-			context.Writer.WriteHeader(http.StatusBadRequest)
-			return
-		}
+	metric, err = m.processMetric(context, *metric)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	err := m.repository.Upsert(metric)
+	err = m.repository.Upsert(context, metric)
 	if err != nil {
 		context.Writer.WriteHeader(http.StatusBadRequest)
 		return
@@ -139,7 +206,11 @@ func (m *metrics) Update(context *gin.Context) {
 func (m *metrics) Get(context *gin.Context) {
 	t := context.Param("type")
 	name := context.Param("name")
-	metric := m.repository.Find(name)
+	metric, err := m.repository.Find(context, name)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	if metric == nil {
 		context.JSON(http.StatusNotFound, "")
 		return
