@@ -14,11 +14,11 @@ import (
 	"net/http"
 )
 
-const HASH_HEADER = "HashSHA256"
+const HashHeader = "HashSHA256"
 
 func Hash(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		header := c.GetHeader(HASH_HEADER)
+		header := c.GetHeader(HashHeader)
 		if header != "" && c.Request.Body != nil {
 			body, err := io.ReadAll(c.Request.Body)
 			if err != nil {
