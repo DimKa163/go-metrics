@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/client"
+	"github.com/DimKa163/go-metrics/internal/client/tripper"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"math/rand"
 	"net/http"
@@ -15,20 +16,30 @@ import (
 
 type Collector struct {
 	*Config
-	client client.MetricClient
+	client.MetricClient
 }
 
 func NewCollector(conf *Config) *Collector {
-	return &Collector{conf, client.NewClient(conf.Addr)}
+	tripperFc := []func(transport http.RoundTripper) http.RoundTripper{
+		func(transport http.RoundTripper) http.RoundTripper {
+			return tripper.NewRetryRoundTripper(transport)
+		},
+		func(transport http.RoundTripper) http.RoundTripper {
+			return tripper.NewGzip(transport)
+		},
+	}
+	if conf.Key != "" {
+		tripperFc = append(tripperFc, func(transport http.RoundTripper) http.RoundTripper {
+			return tripper.NewHashTripper(transport, conf.Key)
+		})
+	}
+	return &Collector{conf, client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}
 }
 
 func (s *Collector) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	var count int64
-	cl := client.NewClient(fmt.Sprintf("http://%s", s.Addr), func(transport http.RoundTripper) http.RoundTripper {
-		return client.NewRetryRoundTripper(transport)
-	})
 	pollTicker := time.NewTicker(time.Duration(s.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(s.ReportInterval) * time.Second)
 	values := make(map[string]float64)
@@ -77,7 +88,7 @@ func (s *Collector) Run() error {
 				metrics = append(metrics, models.CreateGauge(k, v))
 			}
 			metrics = append(metrics, models.CreateCounter("PollCount", count))
-			if err := cl.BatchUpdate(metrics); err != nil {
+			if err := s.BatchUpdate(metrics); err != nil {
 				fmt.Println(err)
 			}
 
