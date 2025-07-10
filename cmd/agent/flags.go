@@ -11,7 +11,7 @@ func ParseFlags(config *collector.Config) {
 	flag.StringVar(&config.Addr, "a", "localhost:8080", "agent address")
 	flag.IntVar(&config.ReportInterval, "r", 10, "report interval in seconds")
 	flag.IntVar(&config.PollInterval, "p", 2, "poll interval in seconds")
-	flag.StringVar(&config.Key, "k", "secret_key", "key")
+	flag.StringVar(&config.Key, "k", "", "key")
 	flag.Parse()
 	if envValue := os.Getenv("ADDRESS"); envValue != "" {
 		config.Addr = envValue

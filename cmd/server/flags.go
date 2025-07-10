@@ -14,7 +14,7 @@ func ParseFlags(config *keeper.Config) {
 	flag.StringVar(&config.Path, "f", "dump", "file to store data")
 	flag.BoolVar(&config.Restore, "r", true, "restore data")
 	flag.StringVar(&config.DatabaseDSN, "d", "", "database connection string")
-	flag.StringVar(&config.Key, "k", "secret_key", "key")
+	flag.StringVar(&config.Key, "k", "", "key")
 	flag.Parse()
 
 	if envValue := os.Getenv("ADDRESS"); envValue != "" {
