@@ -106,7 +106,7 @@ func (s *Server) Map() {
 	})
 	s.GET("/", s.metricController.Home)
 	s.GET("/value/:type/:name", s.metricController.Get)
-	s.POST("/value", s.metricController.GetJSON)
+	s.POST("/value/", s.metricController.GetJSON)
 	s.POST("/update/:type/:name/:value", s.metricController.Update)
 	s.POST("/update/", s.metricController.UpdateJSON)
 	s.POST("/updates", s.metricController.UpdatesJSON)
