@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/models"
@@ -22,7 +21,7 @@ type metricClient struct {
 	addr   string
 }
 
-func NewClient(addr string, transports ...func(transport http.RoundTripper) http.RoundTripper) MetricClient {
+func NewClient(addr string, transports []func(transport http.RoundTripper) http.RoundTripper) MetricClient {
 	var transport http.RoundTripper
 	defaultTransport := &http.Transport{}
 	transport = defaultTransport
@@ -105,12 +104,7 @@ func (c *metricClient) createRequest(metric *models.Metric) (*http.Request, erro
 		return nil, err
 	}
 
-	buffer := bytes.NewBuffer(nil)
-
-	err = compress(data, buffer)
-	if err != nil {
-		return nil, err
-	}
+	buffer := bytes.NewBuffer(data)
 
 	req, err := http.NewRequest(http.MethodPost, fullAddr, buffer)
 
@@ -126,41 +120,16 @@ func (c *metricClient) createRequest(metric *models.Metric) (*http.Request, erro
 
 func (c *metricClient) createBatchRequest(metrics []*models.Metric) (*http.Request, error) {
 	fullAddr := fmt.Sprintf("%s/updates", c.addr)
-
 	data, err := json.Marshal(metrics)
 	if err != nil {
 		return nil, err
 	}
 
-	buffer := bytes.NewBuffer(nil)
-
-	err = compress(data, buffer)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, fullAddr, buffer)
+	req, err := http.NewRequest(http.MethodPost, fullAddr, bytes.NewBuffer(data))
 
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("Content-Encoding", "gzip")
-
-	req.Header.Add("Content-Type", "application/json")
 	return req, nil
-}
-
-func compress(data []byte, buffer *bytes.Buffer) error {
-	writer := gzip.NewWriter(buffer)
-	_, err := writer.Write(data)
-	if err != nil {
-		return err
-	}
-
-	err = writer.Close()
-	if err != nil {
-		return err
-	}
-	return nil
 }

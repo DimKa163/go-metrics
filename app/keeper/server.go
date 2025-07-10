@@ -73,6 +73,9 @@ func New(config *Config) (*Server, error) {
 	router.Use(gin.Recovery())
 	router.Use(middleware.LoggingMiddleware())
 	router.Use(middleware.GzipMiddleware())
+	if config.Key != "" {
+		router.Use(middleware.Hash(config.Key))
+	}
 	return &Server{
 		ServiceContainer: &ServiceContainer{
 			conf:             config,
