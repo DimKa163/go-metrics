@@ -5,4 +5,5 @@ type Config struct {
 	ReportInterval int
 	PollInterval   int
 	Key            string
+	Limit          int
 }
