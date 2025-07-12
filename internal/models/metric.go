@@ -91,23 +91,3 @@ func CreateMetric(tt string, name string, value string) (*Metric, error) {
 		return nil, ErrUnknownMetricType
 	}
 }
-func Update(metric *Metric, value string) error {
-	switch metric.Type {
-	case GaugeType:
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return err
-		}
-		metric.Value = &val
-	case CounterType:
-		val, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return err
-		}
-		newVal := *metric.Delta + val
-		metric.Delta = &newVal
-	default:
-		return ErrUnknownMetricType
-	}
-	return nil
-}
