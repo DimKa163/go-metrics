@@ -23,7 +23,8 @@ func NewReader(r io.ReadCloser) (*Reader, error) {
 }
 
 func (g *Reader) Read(p []byte) (n int, err error) {
-	return g.gz.Read(p)
+	v, err := g.gz.Read(p)
+	return v, err
 }
 
 func (g *Reader) Close() error {

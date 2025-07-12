@@ -7,4 +7,5 @@ type Config struct {
 	Restore       bool
 	LogLevel      string
 	DatabaseDSN   string
+	Key           string
 }
