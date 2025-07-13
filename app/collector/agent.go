@@ -39,29 +39,37 @@ func (c *Collector) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	var count int64
+	values := make(map[string]float64)
+	var err error
 	pollTicker := time.NewTicker(time.Duration(c.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(c.ReportInterval) * time.Second)
-	values, err := runtime.ReadStat()
-	if err != nil {
-		return err
-	}
-	jobs := make(chan *models.Metric, len(values)+1)
-	for i := 0; i < c.Limit; i++ {
-		go c.worker(ctx, jobs)
-	}
+
 	for {
 		select {
 		case <-ctx.Done():
-			close(jobs)
 			return ctx.Err()
 		case <-pollTicker.C:
-			values, _ = runtime.ReadStat()
+			err = runtime.ReadMemoryStats(values)
+			if err != nil {
+				fmt.Printf("Error reading stats: %v\n", err)
+				continue
+			}
+			err = runtime.ReadCPUStats(values)
+			if err != nil {
+				fmt.Printf("Error reading stats: %v\n", err)
+				continue
+			}
 			count++
 		case <-reportTicker.C:
+			jobs := make(chan *models.Metric, len(values))
+			for i := 0; i < c.Limit; i++ {
+				go c.worker(ctx, jobs)
+			}
 			for k, v := range values {
 				jobs <- models.CreateGauge(k, v)
 			}
 			jobs <- models.CreateCounter("PollCount", count)
+			close(jobs)
 		}
 	}
 }
@@ -74,9 +82,15 @@ func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
 		case metric := <-ch:
 			fmt.Println(metric)
 			if metric.Type == models.CounterType {
-				_ = c.UpdateCounter(metric.ID, *metric.Delta)
+				if err := c.UpdateCounter(metric.ID, *metric.Delta); err != nil {
+					fmt.Println(err)
+					continue
+				}
 			} else if metric.Type == models.GaugeType {
-				_ = c.UpdateGauge(metric.ID, *metric.Value)
+				if err := c.UpdateGauge(metric.ID, *metric.Value); err != nil {
+					fmt.Println(err)
+					continue
+				}
 			}
 		}
 	}

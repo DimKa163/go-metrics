@@ -23,9 +23,12 @@ func NewHashTripper(rt http.RoundTripper, key string) http.RoundTripper {
 
 func (rt *HashTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var body []byte
+	var err error
 	if req.Body != nil {
-		body, _ = io.ReadAll(req.Body)
-
+		body, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
 		hsh := hmac.New(sha256.New, []byte(rt.key))
 		_, err := hsh.Write(body)
 		if err != nil {

@@ -17,8 +17,12 @@ func NewRetryRoundTripper(rt http.RoundTripper) http.RoundTripper {
 
 func (rt *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var body []byte
+	var err error
 	if req.Body != nil {
-		body, _ = io.ReadAll(req.Body)
+		body, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
 		req.Body = io.NopCloser(bytes.NewBuffer(body))
 	}
 	times := [3]int{1, 3, 5}

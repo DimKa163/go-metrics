@@ -9,10 +9,9 @@ import (
 	"time"
 )
 
-func ReadStat() (map[string]float64, error) {
+func ReadMemoryStats(values map[string]float64) error {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	values := make(map[string]float64)
 	values["Alloc"] = float64(memStats.Alloc)
 	values["BuckHashSys"] = float64(memStats.BuckHashSys)
 	values["Frees"] = float64(memStats.Frees)
@@ -47,17 +46,20 @@ func ReadStat() (map[string]float64, error) {
 
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	values["TotalMemory"] = float64(vmStat.Total / 1024 / 1024)
 	values["FreeMemory"] = float64(vmStat.Free / 1024 / 1024)
+	return nil
+}
 
+func ReadCPUStats(values map[string]float64) error {
 	cp, err := cpu.Percent(time.Second, true)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for i, c := range cp {
 		values[fmt.Sprintf("CPUutilization%d", i+1)] = c
 	}
-	return values, nil
+	return nil
 }
