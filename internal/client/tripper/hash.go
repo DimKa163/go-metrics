@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"hash"
 	"io"
 	"net/http"
 )
@@ -13,14 +12,12 @@ import (
 type HashTripper struct {
 	rt  http.RoundTripper
 	key string
-	hash.Hash
 }
 
 func NewHashTripper(rt http.RoundTripper, key string) http.RoundTripper {
 	return &HashTripper{
-		rt:   rt,
-		key:  key,
-		Hash: hmac.New(sha256.New, []byte(key)),
+		rt:  rt,
+		key: key,
 	}
 }
 
@@ -28,15 +25,17 @@ func (rt *HashTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var body []byte
 	if req.Body != nil {
 		body, _ = io.ReadAll(req.Body)
-		_, err := rt.Write(body)
+
+		hsh := hmac.New(sha256.New, []byte(rt.key))
+		_, err := hsh.Write(body)
 		if err != nil {
 			return nil, err
 		}
-		h := rt.Sum(nil)
-		hsh := hex.EncodeToString(h)
-		req.Header.Set("HashSHA256", hsh)
+		h := hsh.Sum(nil)
+		str := hex.EncodeToString(h)
+		req.Header.Set("HashSHA256", str)
 		req.Body = io.NopCloser(bytes.NewReader(body))
-		rt.Reset()
+		hsh.Reset()
 	}
 	return rt.rt.RoundTrip(req)
 }
