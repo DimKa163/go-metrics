@@ -80,6 +80,9 @@ func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
 		case <-ctx.Done():
 			return
 		case metric := <-ch:
+			if metric == nil {
+				continue
+			}
 			fmt.Println(metric)
 			if metric.Type == models.CounterType {
 				if err := c.UpdateCounter(metric.ID, *metric.Delta); err != nil {
