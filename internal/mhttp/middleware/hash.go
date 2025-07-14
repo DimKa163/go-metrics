@@ -62,13 +62,13 @@ func (h *HashWriter) Write(b []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	sum := h.Sum(nil)
-	hsh := hex.EncodeToString(sum)
-	h.Header().Set("HashSHA256", hsh)
 	return h.ResponseWriter.Write(b)
 }
 
 func (h *HashWriter) WriteHeader(statusCode int) {
+	sum := h.Sum(nil)
+	hsh := hex.EncodeToString(sum)
+	h.Header().Set("HashSHA256", hsh)
 	h.ResponseWriter.WriteHeader(statusCode)
 }
 
