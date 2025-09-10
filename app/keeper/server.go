@@ -10,6 +10,8 @@ import (
 	"github.com/DimKa163/go-metrics/internal/persistence/mem"
 	"github.com/DimKa163/go-metrics/internal/persistence/pg"
 	"github.com/DimKa163/go-metrics/internal/tasks"
+	"github.com/DimKa163/go-metrics/internal/usecase"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -82,7 +84,7 @@ func New(config *Config) (*Server, error) {
 			pg:               pgConnection,
 			filer:            filer,
 			repository:       repository,
-			metricController: controllers.NewMetricController(repository),
+			metricController: controllers.NewMetricController(usecase.NewMetricService(repository)),
 			dumpTask:         tasks.NewDumpTask(repository, filer, time.Duration(config.StoreInterval)*time.Second),
 		},
 		Server: &http.Server{
@@ -96,6 +98,7 @@ func New(config *Config) (*Server, error) {
 }
 
 func (s *Server) Map() {
+	pprof.Register(s.Engine)
 	s.GET("/ping", func(c *gin.Context) {
 		if s.pg != nil {
 			if err := s.pg.Ping(c); err != nil {
@@ -104,12 +107,7 @@ func (s *Server) Map() {
 		}
 		c.String(http.StatusOK, "pong")
 	})
-	s.GET("/", s.metricController.Home)
-	s.GET("/value/:type/:name", s.metricController.Get)
-	s.POST("/value/", s.metricController.GetJSON)
-	s.POST("/update/:type/:name/:value", s.metricController.Update)
-	s.POST("/update/", s.metricController.UpdateJSON)
-	s.POST("/updates", s.metricController.UpdatesJSON)
+	s.metricController.Map(s.Engine)
 }
 
 func (s *Server) Run() error {
