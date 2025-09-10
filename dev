@@ -1,0 +1,1 @@
+mockgen -source=I:\GoLand\go-metrics\internal\persistence\repository.go -destination=I:\GoLand\go-metrics\internal\mocks\mock_repository.go -package=mocks Repository

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/DimKa163/go-metrics/internal/persistence"
 	"io"
 	"sync"
 )
@@ -48,7 +49,7 @@ func (s *MemoryStore) Find(_ context.Context, key string) (*models.Metric, error
 	if val, ok := s.metrics[key]; ok {
 		return val, nil
 	}
-	return nil, nil
+	return nil, persistence.ErrMetricNotFound
 }
 
 func (s *MemoryStore) GetAll(_ context.Context) ([]models.Metric, error) {

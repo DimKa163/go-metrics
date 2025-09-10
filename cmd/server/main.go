@@ -6,6 +6,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"go.uber.org/zap"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 func main() {
