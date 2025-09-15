@@ -4,19 +4,21 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"github.com/DimKa163/go-metrics/internal/files"
-	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
-	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/persistence/mem"
-	"github.com/DimKa163/go-metrics/internal/usecase"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/DimKa163/go-metrics/internal/files"
+	"github.com/DimKa163/go-metrics/internal/mhttp/middleware"
+	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/DimKa163/go-metrics/internal/persistence/mem"
+	"github.com/DimKa163/go-metrics/internal/usecase"
 )
 
 func TestUpdate(t *testing.T) {

@@ -1,10 +1,12 @@
 package middleware
 
 import (
-	"github.com/DimKa163/go-metrics/internal/logging"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"time"
+
+	"github.com/DimKa163/go-metrics/internal/logging"
 )
 
 func LoggingMiddleware() gin.HandlerFunc {

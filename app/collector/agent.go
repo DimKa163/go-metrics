@@ -3,14 +3,15 @@ package collector
 import (
 	"context"
 	"fmt"
-	"github.com/DimKa163/go-metrics/internal/client"
-	"github.com/DimKa163/go-metrics/internal/client/tripper"
-	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/runtime"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/DimKa163/go-metrics/internal/client"
+	"github.com/DimKa163/go-metrics/internal/client/tripper"
+	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/DimKa163/go-metrics/internal/runtime"
 )
 
 type Collector struct {

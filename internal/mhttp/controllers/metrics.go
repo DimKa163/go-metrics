@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/usecase"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
-	"net/http"
 )
 
 type Metrics interface {

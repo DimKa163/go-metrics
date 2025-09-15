@@ -2,11 +2,13 @@ package main
 
 import (
 	"errors"
-	"github.com/DimKa163/go-metrics/app/keeper"
-	"github.com/DimKa163/go-metrics/internal/logging"
-	"go.uber.org/zap"
 	"net/http"
 	_ "net/http/pprof"
+
+	"go.uber.org/zap"
+
+	"github.com/DimKa163/go-metrics/app/keeper"
+	"github.com/DimKa163/go-metrics/internal/logging"
 )
 
 func main() {

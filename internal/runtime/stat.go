@@ -2,11 +2,12 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
 	"math/rand"
 	"runtime"
 	"time"
+
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 )
 
 func ReadMemoryStats(values map[string]float64) error {

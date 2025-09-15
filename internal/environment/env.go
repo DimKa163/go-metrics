@@ -5,26 +5,38 @@ import (
 	"strconv"
 )
 
-func ParseIntEnv(name string, defValue *int) {
+func ParseIntEnv(name string, defValue *int) error {
+	var val int
+	var err error
 	if envValue := os.Getenv(name); envValue != "" {
-		if value, err := strconv.Atoi(envValue); err == nil {
-			*defValue = value
+		if val, err = strconv.Atoi(envValue); err != nil {
+			return err
 		}
+		*defValue = val
 	}
+	return nil
 }
 
-func ParseInt64Env(name string, defValue *int64) {
+func ParseInt64Env(name string, defValue *int64) error {
+	var val int64
+	var err error
 	if envValue := os.Getenv(name); envValue != "" {
-		if value, err := strconv.ParseInt(envValue, 10, 64); err == nil {
-			*defValue = value
+		if val, err = strconv.ParseInt(envValue, 10, 64); err != nil {
+			return err
 		}
+		*defValue = val
 	}
+	return nil
 }
 
-func ParseBoolEnv(name string, defValue *bool) {
+func ParseBoolEnv(name string, defValue *bool) error {
+	var val bool
+	var err error
 	if envValue := os.Getenv(name); envValue != "" {
-		if value, err := strconv.ParseBool(envValue); err == nil {
-			*defValue = value
+		if val, err = strconv.ParseBool(envValue); err != nil {
+			return err
 		}
+		*defValue = val
 	}
+	return nil
 }

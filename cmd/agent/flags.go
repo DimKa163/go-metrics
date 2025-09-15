@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
+	"os"
+
 	"github.com/DimKa163/go-metrics/app/collector"
 	"github.com/DimKa163/go-metrics/internal/environment"
-	"os"
 )
 
 func ParseFlags(config *collector.Config) {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/persistence"
+	"sync"
+
 	"github.com/cenkalti/backoff/v5"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -14,7 +14,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"sync"
+
+	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/DimKa163/go-metrics/internal/persistence"
 )
 
 type Store struct {

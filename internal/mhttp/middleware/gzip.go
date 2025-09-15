@@ -1,9 +1,11 @@
 package middleware
 
 import (
-	"github.com/DimKa163/go-metrics/internal/gzip"
-	"github.com/gin-gonic/gin"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/DimKa163/go-metrics/internal/gzip"
 )
 
 const (

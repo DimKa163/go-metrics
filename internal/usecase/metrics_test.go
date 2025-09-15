@@ -2,12 +2,14 @@ package usecase
 
 import (
 	"context"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/DimKa163/go-metrics/internal/mocks"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/persistence"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGetShouldReturnMetricWhenMetricExists(t *testing.T) {

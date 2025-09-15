@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/cenkalti/backoff/v5"
 	"os"
+
+	"github.com/cenkalti/backoff/v5"
+
+	"github.com/DimKa163/go-metrics/internal/models"
 )
 
 type Filer struct {
