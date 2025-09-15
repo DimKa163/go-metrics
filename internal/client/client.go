@@ -17,12 +17,12 @@ type MetricClient interface {
 	BatchUpdate(metrics []*models.Metric) error
 }
 
-type HttpExecuter interface {
+type HTTPExecuter interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 type metricClient struct {
-	client HttpExecuter
+	client HTTPExecuter
 	addr   string
 }
 
