@@ -2,11 +2,13 @@ package tasks
 
 import (
 	"context"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"github.com/DimKa163/go-metrics/internal/persistence"
-	"go.uber.org/zap"
-	"time"
 )
 
 type DumpTask struct {

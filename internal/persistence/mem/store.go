@@ -3,11 +3,12 @@ package mem
 import (
 	"context"
 	"errors"
+	"io"
+	"sync"
+
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/persistence"
-	"io"
-	"sync"
 )
 
 type StoreOption struct {

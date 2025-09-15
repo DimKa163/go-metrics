@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"compress/gzip"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"net"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Writer struct {

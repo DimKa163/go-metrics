@@ -2,6 +2,16 @@ package keeper
 
 import (
 	"context"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
+
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"github.com/DimKa163/go-metrics/internal/mhttp/controllers"
@@ -11,14 +21,6 @@ import (
 	"github.com/DimKa163/go-metrics/internal/persistence/pg"
 	"github.com/DimKa163/go-metrics/internal/tasks"
 	"github.com/DimKa163/go-metrics/internal/usecase"
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
-	"net/http"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type ServiceContainer struct {
