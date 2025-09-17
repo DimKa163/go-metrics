@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -59,6 +60,10 @@ func TestUpdate(t *testing.T) {
 			assert.Equal(t, c.expectedStatusCode, res.Code)
 		})
 	}
+}
+
+func ExampleNewMetricController() {
+	fmt.Println("Hello world")
 }
 
 func TestUpdateJSON(t *testing.T) {

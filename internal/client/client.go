@@ -42,16 +42,19 @@ func NewClient(addr string, transports []func(transport http.RoundTripper) http.
 	}
 }
 
+// UpdateGauge create/update gauge metric
 func (c *metricClient) UpdateGauge(name string, value float64) error {
 	metric := models.CreateGauge(name, value)
 	return c.send(metric)
 }
 
+// UpdateCounter create/update gauge metric
 func (c *metricClient) UpdateCounter(name string, value int64) error {
 	metric := models.CreateCounter(name, value)
 	return c.send(metric)
 }
 
+// BatchUpdate create/update many metrics
 func (c *metricClient) BatchUpdate(metrics []*models.Metric) error {
 	req, err := c.createBatchRequest(metrics)
 	if err != nil {

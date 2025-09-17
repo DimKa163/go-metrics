@@ -16,6 +16,7 @@ const (
 	ContentEncodingGZIP = "gzip"
 )
 
+// GzipMiddleware compress or decompress data
 func GzipMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		acceptEncoding := c.Request.Header.Get("Accept-Encoding")

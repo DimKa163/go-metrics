@@ -17,6 +17,7 @@ import (
 
 const HashHeader = "HashSHA256"
 
+// Hash data verification
 func Hash(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header := c.GetHeader(HashHeader)

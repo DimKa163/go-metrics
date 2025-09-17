@@ -20,6 +20,7 @@ func NewMetricService(repository persistence.Repository) *MetricService {
 	return &MetricService{repository: repository}
 }
 
+// Get get metric
 func (ms *MetricService) Get(ctx context.Context, id string) (models.Metric, error) {
 	model, err := ms.repository.Find(ctx, id)
 	if err != nil {
@@ -31,11 +32,13 @@ func (ms *MetricService) Get(ctx context.Context, id string) (models.Metric, err
 	return *model, nil
 }
 
+// GetAll get all metric
 func (ms *MetricService) GetAll(ctx context.Context) ([]models.Metric, error) {
 	return ms.repository.GetAll(ctx)
 }
 
-func (ms *MetricService) Update(ctx context.Context, newMetric models.Metric) (models.Metric, error) {
+// Upsert create/update metric
+func (ms *MetricService) Upsert(ctx context.Context, newMetric models.Metric) (models.Metric, error) {
 	m, err := ms.processMetric(ctx, newMetric)
 	if err != nil {
 		return models.Metric{}, err
@@ -47,6 +50,7 @@ func (ms *MetricService) Update(ctx context.Context, newMetric models.Metric) (m
 	return m, nil
 }
 
+// BatchUpdate create/update metrics
 func (ms *MetricService) BatchUpdate(ctx context.Context, metricList []models.Metric) error {
 	var err error
 	mapMetric := make(map[string]models.Metric)

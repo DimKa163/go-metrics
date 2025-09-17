@@ -79,7 +79,7 @@ func TestUpdateGaugeWhenMetricExistShouldSuccess(t *testing.T) {
 	mockRepository.EXPECT().Find(ctx, id).Return(&exitsMetric, nil)
 	mockRepository.EXPECT().Upsert(ctx, &newMetric).Return(nil)
 
-	sut, err := service.Update(ctx, newMetric)
+	sut, err := service.Upsert(ctx, newMetric)
 
 	assert.NoError(t, err, "update metric should be successful")
 	assert.Equal(t, newMetric, sut, "update metric should return true metric")
@@ -97,7 +97,7 @@ func TestUpdateGaugeWhenMetricDoesNotExistShouldSuccess(t *testing.T) {
 	mockRepository.EXPECT().Find(ctx, id).Return(nil, persistence.ErrMetricNotFound)
 	mockRepository.EXPECT().Upsert(ctx, &newMetric).Return(nil)
 
-	sut, err := service.Update(ctx, newMetric)
+	sut, err := service.Upsert(ctx, newMetric)
 
 	assert.NoError(t, err, "update metric should be successful")
 	assert.Equal(t, newMetric, sut, "update metric should return true metric")
@@ -120,7 +120,7 @@ func TestUpdateCounterWhenMetricExistShouldSuccess(t *testing.T) {
 	mockRepository.EXPECT().Find(ctx, id).Return(&exitsMetric, nil)
 	mockRepository.EXPECT().Upsert(ctx, &exitsMetric).Return(nil)
 
-	sut, err := service.Update(ctx, newMetric)
+	sut, err := service.Upsert(ctx, newMetric)
 
 	exitsMetric.Update(newMetric)
 	assert.NoError(t, err, "update metric should be successful")
@@ -139,7 +139,7 @@ func TestUpdateCounterWhenMetricDoesNotExistShouldSuccess(t *testing.T) {
 	mockRepository.EXPECT().Find(ctx, id).Return(nil, persistence.ErrMetricNotFound)
 	mockRepository.EXPECT().Upsert(ctx, &newMetric).Return(nil)
 
-	sut, err := service.Update(ctx, newMetric)
+	sut, err := service.Upsert(ctx, newMetric)
 
 	assert.NoError(t, err, "update metric should be successful")
 	assert.Equal(t, newMetric, sut, "update metric should return true metric")

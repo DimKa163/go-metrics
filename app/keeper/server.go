@@ -2,16 +2,13 @@ package keeper
 
 import (
 	"context"
+	swaggerFiles "github.com/swaggo/files"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
-
+	docs "github.com/DimKa163/go-metrics/docs"
 	"github.com/DimKa163/go-metrics/internal/files"
 	"github.com/DimKa163/go-metrics/internal/logging"
 	"github.com/DimKa163/go-metrics/internal/mhttp/controllers"
@@ -21,6 +18,11 @@ import (
 	"github.com/DimKa163/go-metrics/internal/persistence/pg"
 	"github.com/DimKa163/go-metrics/internal/tasks"
 	"github.com/DimKa163/go-metrics/internal/usecase"
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
 )
 
 type ServiceContainer struct {
@@ -99,8 +101,11 @@ func New(config *Config) (*Server, error) {
 	}, nil
 }
 
+// Map routes
 func (s *Server) Map() {
 	pprof.Register(s.Engine)
+	docs.SwaggerInfo.BasePath = ""
+	s.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	s.GET("/ping", func(c *gin.Context) {
 		if s.pg != nil {
 			if err := s.pg.Ping(c); err != nil {
@@ -112,6 +117,7 @@ func (s *Server) Map() {
 	s.metricController.Map(s.Engine)
 }
 
+// Run app
 func (s *Server) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()

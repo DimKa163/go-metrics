@@ -9,6 +9,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/logging"
 )
 
+// LoggingMiddleware logging
 func LoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logging.Log.Info(

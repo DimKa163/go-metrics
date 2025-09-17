@@ -1,3 +1,4 @@
+// Package collector collect runtime metric
 package collector
 
 import (
@@ -36,6 +37,7 @@ func NewCollector(conf *Config) *Collector {
 	return &Collector{conf, client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}
 }
 
+// Run worker
 func (c *Collector) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()

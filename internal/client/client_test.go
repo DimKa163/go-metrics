@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -82,4 +83,27 @@ func TestBatchUpdate_Success(t *testing.T) {
 
 	err := c.BatchUpdate(metrics)
 	assert.NoError(t, err)
+}
+
+func ExampleNewClient() {
+	// поднимаем тестовый сервер, чтобы не ходить наружу
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// создаём клиента
+	c := NewClient(server.URL, nil)
+
+	// обновляем gauge
+	_ = c.UpdateGauge("cpu", 0.95)
+
+	// обновляем counter
+	_ = c.UpdateCounter("requests", 10)
+
+	// batch update
+	_ = c.BatchUpdate([]*models.Metric{
+		models.CreateGauge("memory", 128.0),
+		models.CreateCounter("hits", 42),
+	})
 }
