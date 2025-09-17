@@ -1,0 +1,155 @@
+definitions:
+  contracts.ErrorModel:
+    properties:
+      error:
+        type: string
+    type: object
+  contracts.Metric:
+    properties:
+      delta:
+        type: integer
+      id:
+        type: string
+      type:
+        type: string
+      value:
+        type: number
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    get:
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: success request
+          schema:
+            type: string
+        "400":
+          description: bad request
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+  /update:
+    post:
+      parameters:
+      - description: metric
+        in: body
+        name: metric
+        required: true
+        schema:
+          $ref: '#/definitions/contracts.Metric'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: bad request
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+  /update/{type}/{name}/{value}:
+    post:
+      parameters:
+      - description: Metric type
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Metric name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Metric value
+        in: path
+        name: value
+        required: true
+        type: string
+      produces:
+      - plain/text
+      - application/json
+      responses:
+        "400":
+          description: bad request
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+  /updates:
+    post:
+      parameters:
+      - description: metric array
+        in: body
+        name: metrics
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/contracts.Metric'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success request
+          schema:
+            type: string
+        "400":
+          description: bad request
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+  /value:
+    post:
+      parameters:
+      - description: metric
+        in: body
+        name: metric
+        required: true
+        schema:
+          $ref: '#/definitions/contracts.Metric'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success request
+          schema:
+            $ref: '#/definitions/contracts.Metric'
+        "400":
+          description: bad request
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/contracts.ErrorModel'
+  /value/{type}/{name}:
+    get:
+      parameters:
+      - description: Metric type
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Metric name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - plain/text
+      - application/json
+      responses: {}
+swagger: "2.0"

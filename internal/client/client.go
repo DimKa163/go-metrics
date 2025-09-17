@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/DimKa163/go-metrics/internal/models"
 	"net/http"
 	"time"
+
+	"github.com/DimKa163/go-metrics/internal/models"
 )
 
 type MetricClient interface {
@@ -16,8 +17,12 @@ type MetricClient interface {
 	BatchUpdate(metrics []*models.Metric) error
 }
 
+type HTTPExecuter interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type metricClient struct {
-	client http.Client
+	client HTTPExecuter
 	addr   string
 }
 
@@ -29,7 +34,7 @@ func NewClient(addr string, transports []func(transport http.RoundTripper) http.
 		transport = t(transport)
 	}
 	return &metricClient{
-		client: http.Client{
+		client: &http.Client{
 			Transport: transport,
 			Timeout:   30 * time.Second,
 		},
@@ -37,49 +42,19 @@ func NewClient(addr string, transports []func(transport http.RoundTripper) http.
 	}
 }
 
+// UpdateGauge create/update gauge metric
 func (c *metricClient) UpdateGauge(name string, value float64) error {
 	metric := models.CreateGauge(name, value)
-
-	req, err := c.createRequest(metric)
-	if err != nil {
-		return err
-	}
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	return nil
+	return c.send(metric)
 }
 
+// UpdateCounter create/update gauge metric
 func (c *metricClient) UpdateCounter(name string, value int64) error {
 	metric := models.CreateCounter(name, value)
-
-	req, err := c.createRequest(metric)
-	if err != nil {
-		return err
-	}
-
-	res, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	return nil
+	return c.send(metric)
 }
 
+// BatchUpdate create/update many metrics
 func (c *metricClient) BatchUpdate(metrics []*models.Metric) error {
 	req, err := c.createBatchRequest(metrics)
 	if err != nil {
@@ -91,6 +66,22 @@ func (c *metricClient) BatchUpdate(metrics []*models.Metric) error {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	return nil
+}
+
+func (c *metricClient) send(metric *models.Metric) error {
+	req, err := c.createRequest(metric)
+	if err != nil {
+		return err
+	}
+	res, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 	return nil

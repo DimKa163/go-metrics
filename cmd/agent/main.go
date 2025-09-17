@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/DimKa163/go-metrics/app/collector"
 	"log"
+
+	"github.com/DimKa163/go-metrics/app/collector"
 )
 
 func main() {

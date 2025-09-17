@@ -1,9 +1,11 @@
 package middleware
 
 import (
-	"github.com/DimKa163/go-metrics/internal/gzip"
-	"github.com/gin-gonic/gin"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/DimKa163/go-metrics/internal/gzip"
 )
 
 const (
@@ -14,6 +16,7 @@ const (
 	ContentEncodingGZIP = "gzip"
 )
 
+// GzipMiddleware compress or decompress data
 func GzipMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		acceptEncoding := c.Request.Header.Get("Accept-Encoding")

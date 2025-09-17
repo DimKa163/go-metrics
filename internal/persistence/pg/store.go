@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/DimKa163/go-metrics/internal/models"
+	"sync"
+
 	"github.com/cenkalti/backoff/v5"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -13,7 +14,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"sync"
+
+	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/DimKa163/go-metrics/internal/persistence"
 )
 
 type Store struct {
@@ -62,7 +65,7 @@ func (s *Store) Find(ctx context.Context, key string) (*models.Metric, error) {
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, persistence.ErrMetricNotFound
 		}
 		return nil, err
 	}

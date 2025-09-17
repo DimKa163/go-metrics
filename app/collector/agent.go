@@ -1,16 +1,18 @@
+// Package collector collect runtime metric
 package collector
 
 import (
 	"context"
 	"fmt"
-	"github.com/DimKa163/go-metrics/internal/client"
-	"github.com/DimKa163/go-metrics/internal/client/tripper"
-	"github.com/DimKa163/go-metrics/internal/models"
-	"github.com/DimKa163/go-metrics/internal/runtime"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/DimKa163/go-metrics/internal/client"
+	"github.com/DimKa163/go-metrics/internal/client/tripper"
+	"github.com/DimKa163/go-metrics/internal/models"
+	"github.com/DimKa163/go-metrics/internal/runtime"
 )
 
 type Collector struct {
@@ -35,6 +37,7 @@ func NewCollector(conf *Config) *Collector {
 	return &Collector{conf, client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}
 }
 
+// Run worker
 func (c *Collector) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()

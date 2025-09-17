@@ -2,9 +2,10 @@ package tripper
 
 import (
 	"bytes"
-	"github.com/cenkalti/backoff/v5"
 	"io"
 	"net/http"
+
+	"github.com/cenkalti/backoff/v5"
 )
 
 type RetryRoundTripper struct {

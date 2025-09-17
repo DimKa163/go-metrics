@@ -23,7 +23,7 @@ type Metric struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
-func (m *Metric) Update(metric *Metric) {
+func (m *Metric) Update(metric Metric) {
 	switch metric.Type {
 	case GaugeType:
 		m.Value = metric.Value
@@ -62,17 +62,14 @@ func CreateGauge(id string, value float64) *Metric {
 		Value: &value,
 	}
 }
-func CreateMetric(tt string, name string, value string) (*Metric, error) {
-	if tt != GaugeType && tt != CounterType {
-		return nil, ErrUnknownMetricType
-	}
+func CreateMetric(tt string, name string, value string) (Metric, error) {
 	switch tt {
 	case GaugeType:
 		val, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return nil, err
+			return Metric{}, err
 		}
-		return &Metric{
+		return Metric{
 			ID:    name,
 			Type:  GaugeType,
 			Value: &val,
@@ -80,14 +77,14 @@ func CreateMetric(tt string, name string, value string) (*Metric, error) {
 	case CounterType:
 		val, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return nil, err
+			return Metric{}, err
 		}
-		return &Metric{
+		return Metric{
 			ID:    name,
 			Type:  CounterType,
 			Delta: &val,
 		}, nil
 	default:
-		return nil, ErrUnknownMetricType
+		return Metric{}, ErrUnknownMetricType
 	}
 }
