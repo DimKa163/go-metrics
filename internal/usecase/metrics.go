@@ -69,8 +69,9 @@ func (ms *MetricService) BatchUpdate(ctx context.Context, metricList []models.Me
 		mapMetric[metric.ID] = metric
 	}
 	resultList := make([]models.Metric, 0)
+	var m models.Metric
 	for _, metric := range mapMetric {
-		m, err := ms.processMetric(ctx, metric)
+		m, err = ms.processMetric(ctx, metric)
 		if err != nil {
 			return err
 		}
