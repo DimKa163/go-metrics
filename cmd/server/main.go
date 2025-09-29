@@ -2,10 +2,9 @@ package main
 
 import (
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 	_ "net/http/pprof"
-
-	"go.uber.org/zap"
 
 	"github.com/DimKa163/go-metrics/app/keeper"
 	"github.com/DimKa163/go-metrics/internal/logging"
