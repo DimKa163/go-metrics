@@ -38,7 +38,7 @@ func NewCollector(conf *Config) *Collector {
 }
 
 // Run worker
-func (c *Collector) Run() error {
+func (c *Collector) Run(buildVersion string, buildDate string, buildCommit string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	var count int64
@@ -46,7 +46,7 @@ func (c *Collector) Run() error {
 	var err error
 	pollTicker := time.NewTicker(time.Duration(c.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(c.ReportInterval) * time.Second)
-
+	printBuildInfo(buildVersion, buildDate, buildCommit)
 	for {
 		select {
 		case <-ctx.Done():
@@ -100,5 +100,19 @@ func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
 			}
 		}
 	}
+}
 
+func printBuildInfo(buildVersion string, buildDate string, buildCommit string) {
+	if buildVersion == "" {
+		buildVersion = "N/A"
+	}
+	if buildDate == "" {
+		buildDate = "N/A"
+	}
+	if buildCommit == "" {
+		buildCommit = "N/A"
+	}
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 }

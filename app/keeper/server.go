@@ -3,6 +3,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	swaggerFiles "github.com/swaggo/files"
 	"net/http"
 	"os/signal"
@@ -119,7 +120,7 @@ func (s *Server) Map() {
 }
 
 // Run app
-func (s *Server) Run() error {
+func (s *Server) Run(buildVersion string, buildDate string, buildCommit string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	if s.useDumpASYNC {
@@ -136,7 +137,23 @@ func (s *Server) Run() error {
 		}
 		_ = s.Server.Shutdown(timeoutCtx)
 	}()
+	printBuildInfo(buildVersion, buildDate, buildCommit)
 	return s.ListenAndServe()
+}
+
+func printBuildInfo(buildVersion string, buildDate string, buildCommit string) {
+	if buildVersion == "" {
+		buildVersion = "N/A"
+	}
+	if buildDate == "" {
+		buildDate = "N/A"
+	}
+	if buildCommit == "" {
+		buildCommit = "N/A"
+	}
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 }
 
 func (s *Server) backup(ctx context.Context) error {

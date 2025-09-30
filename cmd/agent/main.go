@@ -6,11 +6,17 @@ import (
 	"github.com/DimKa163/go-metrics/app/collector"
 )
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 func main() {
 	var config collector.Config
 	ParseFlags(&config)
 	app := collector.NewCollector(&config)
-	if err := app.Run(); err != nil {
+	if err := app.Run(buildVersion, buildDate, buildCommit); err != nil {
 		log.Fatal(err)
 	}
 }
