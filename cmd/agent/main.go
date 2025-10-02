@@ -15,8 +15,11 @@ var (
 func main() {
 	var config collector.Config
 	ParseFlags(&config)
-	app := collector.NewCollector(&config)
-	if err := app.Run(buildVersion, buildDate, buildCommit); err != nil {
+	app, err := collector.NewCollector(&config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = app.Run(buildVersion, buildDate, buildCommit); err != nil {
 		log.Fatal(err)
 	}
 }

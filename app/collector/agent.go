@@ -4,6 +4,7 @@ package collector
 import (
 	"context"
 	"fmt"
+	"github.com/DimKa163/go-metrics/internal/crypto"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -20,7 +21,7 @@ type Collector struct {
 	client.MetricClient
 }
 
-func NewCollector(conf *Config) *Collector {
+func NewCollector(conf *Config) (*Collector, error) {
 	tripperFc := []func(transport http.RoundTripper) http.RoundTripper{
 		func(transport http.RoundTripper) http.RoundTripper {
 			return tripper.NewRetryRoundTripper(transport)
@@ -34,7 +35,17 @@ func NewCollector(conf *Config) *Collector {
 			return tripper.NewHashTripper(transport, conf.Key)
 		})
 	}
-	return &Collector{conf, client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}
+
+	if conf.PublicKeyFilePath != "" {
+		encrypter, err := crypto.NewEncrypter(conf.PublicKeyFilePath)
+		if err != nil {
+			return nil, err
+		}
+		tripperFc = append(tripperFc, func(transport http.RoundTripper) http.RoundTripper {
+			return tripper.NewCryptoTripper(transport, encrypter)
+		})
+	}
+	return &Collector{conf, client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}, nil
 }
 
 // Run worker
