@@ -2,13 +2,18 @@ package main
 
 import (
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 	_ "net/http/pprof"
 
-	"go.uber.org/zap"
-
 	"github.com/DimKa163/go-metrics/app/keeper"
 	"github.com/DimKa163/go-metrics/internal/logging"
+)
+
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
 )
 
 func main() {
@@ -21,7 +26,7 @@ func main() {
 	}
 	app.Map()
 	app.LoadHTMLFiles("views/home.tmpl")
-	if err := app.Run(); err != nil {
+	if err := app.Run(buildVersion, buildDate, buildCommit); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
 			logging.Log.Fatal("Failed to run keeper", zap.Error(err))
 		}
