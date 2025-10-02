@@ -4,6 +4,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"github.com/DimKa163/go-metrics/internal/crypto"
 	swaggerFiles "github.com/swaggo/files"
 	"net/http"
 	"os/signal"
@@ -34,6 +35,7 @@ type ServiceContainer struct {
 	repository       persistence.Repository
 	metricController controllers.Metrics
 	dumpTask         *tasks.DumpTask
+	crypto           *crypto.Decrypter
 }
 
 type Server struct {
@@ -50,6 +52,7 @@ func New(config *Config) (*Server, error) {
 	var pgConnection *pgxpool.Pool
 	var useDumpASYNC bool
 	var useBackup bool
+	var decrypter *crypto.Decrypter
 	attempts := []int{1, 3, 5}
 	filer := files.NewFiler(config.Path, attempts)
 
@@ -74,6 +77,13 @@ func New(config *Config) (*Server, error) {
 		useDumpASYNC = config.StoreInterval > 0
 		useBackup = true
 	}
+
+	if config.PrivateKeyFilePath != "" {
+		decrypter, err = crypto.NewDecrypter(config.PrivateKeyFilePath)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err = logging.Initialize(config.LogLevel); err != nil {
 		return nil, err
 	}
@@ -81,6 +91,9 @@ func New(config *Config) (*Server, error) {
 	router.Use(gin.Recovery())
 	router.Use(middleware.LoggingMiddleware())
 	router.Use(middleware.GzipMiddleware())
+	if decrypter != nil {
+		router.Use(middleware.CryptoMiddleware(decrypter))
+	}
 	if config.Key != "" {
 		router.Use(middleware.Hash(config.Key))
 	}
@@ -92,6 +105,7 @@ func New(config *Config) (*Server, error) {
 			repository:       repository,
 			metricController: controllers.NewMetricController(usecase.NewMetricService(repository)),
 			dumpTask:         tasks.NewDumpTask(repository, filer, time.Duration(config.StoreInterval)*time.Second),
+			crypto:           decrypter,
 		},
 		Server: &http.Server{
 			Addr:    config.Addr,

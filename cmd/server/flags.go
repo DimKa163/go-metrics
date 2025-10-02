@@ -16,6 +16,7 @@ func ParseFlags(config *keeper.Config) {
 	flag.BoolVar(&config.Restore, "r", true, "restore data")
 	flag.StringVar(&config.DatabaseDSN, "d", "", "database connection string")
 	flag.StringVar(&config.Key, "k", "", "key")
+	flag.StringVar(&config.PrivateKeyFilePath, "crypto-key", "", "path to private key")
 	flag.Parse()
 
 	if envValue := os.Getenv("ADDRESS"); envValue != "" {
@@ -41,4 +42,8 @@ func ParseFlags(config *keeper.Config) {
 	}
 
 	environment.ParseBoolEnv("RESTORE", &config.Restore)
+
+	if envValue := os.Getenv("CRYPTO_KEY"); envValue != "" {
+		config.PrivateKeyFilePath = envValue
+	}
 }
