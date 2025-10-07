@@ -1,36 +1,24 @@
 package main
 
 import (
-	"flag"
-	"os"
-
 	"github.com/DimKa163/go-metrics/app/collector"
 	"github.com/DimKa163/go-metrics/internal/environment"
 )
 
 func ParseFlags(config *collector.Config) {
-	flag.StringVar(&config.Addr, "a", "localhost:8080", "agent address")
-	flag.IntVar(&config.ReportInterval, "r", 10, "report interval in seconds")
-	flag.IntVar(&config.PollInterval, "p", 2, "poll interval in seconds")
-	flag.StringVar(&config.Key, "k", "", "key")
-	flag.IntVar(&config.Limit, "l", 4, "rate limit")
-	flag.StringVar(&config.PublicKeyFilePath, "crypto-key", "", "path to public key")
-	flag.Parse()
-	if envValue := os.Getenv("ADDRESS"); envValue != "" {
-		config.Addr = envValue
-	}
-
-	if envValue := os.Getenv("KEY"); envValue != "" {
-		config.Key = envValue
-	}
-
-	environment.ParseIntEnv("REPORT_INTERVAL", &config.ReportInterval)
-
-	environment.ParseIntEnv("RATE_LIMIT", &config.Limit)
-
-	environment.ParseIntEnv("POLL_INTERVAL", &config.PollInterval)
-
-	if envValue := os.Getenv("CRYPTO_KEY"); envValue != "" {
-		config.PublicKeyFilePath = envValue
-	}
+	environment.BindStringArg("a", "localhost:8080", "keeper address")
+	environment.BindStringEnv("ADDRESS")
+	environment.BindIntArg("r", 10, "report interval in seconds")
+	environment.BindIntEnv("REPORT_INTERVAL")
+	environment.BindIntArg("p", 2, "poll interval in seconds")
+	environment.BindIntEnv("POLL_INTERVAL")
+	environment.BindStringArg("k", "", "key")
+	environment.BindStringEnv("KEY")
+	environment.BindIntArg("l", 4, "rate limit")
+	environment.BindIntEnv("RATE_LIMIT")
+	environment.BindStringArg("c", "", "config")
+	environment.BindStringEnv("CONFIG")
+	environment.BindStringArg("crypto-key", "", "crypto key")
+	environment.BindStringEnv("CRYPTO_KEY")
+	environment.Parse(config)
 }
