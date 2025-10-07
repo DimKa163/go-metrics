@@ -156,18 +156,16 @@ func (s *Server) Run(buildVersion string, buildDate string, buildCommit string) 
 }
 
 func printBuildInfo(buildVersion string, buildDate string, buildCommit string) {
-	if buildVersion == "" {
-		buildVersion = "N/A"
+	fmt.Printf("Build version: %s\n", ifNan(buildVersion))
+	fmt.Printf("Build date: %s\n", ifNan(buildDate))
+	fmt.Printf("Build commit: %s\n", ifNan(buildCommit))
+}
+
+func ifNan(value string) string {
+	if value == "" {
+		return "N/A"
 	}
-	if buildDate == "" {
-		buildDate = "N/A"
-	}
-	if buildCommit == "" {
-		buildCommit = "N/A"
-	}
-	fmt.Printf("Build version: %s\n", buildVersion)
-	fmt.Printf("Build date: %s\n", buildDate)
-	fmt.Printf("Build commit: %s\n", buildCommit)
+	return value
 }
 
 func (s *Server) backup(ctx context.Context) error {

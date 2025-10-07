@@ -7,6 +7,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/crypto"
 	"net/http"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 
 type Collector struct {
 	*Config
+	wg sync.WaitGroup
 	client.MetricClient
 }
 
@@ -45,7 +47,7 @@ func NewCollector(conf *Config) (*Collector, error) {
 			return tripper.NewCryptoTripper(transport, encrypter)
 		})
 	}
-	return &Collector{conf, client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}, nil
+	return &Collector{Config: conf, MetricClient: client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}, nil
 }
 
 // Run worker
@@ -54,7 +56,12 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 	defer cancel()
 	var count int64
 	values := make(map[string]float64)
+	jobs := make(chan *models.Metric, c.Limit*4)
 	var err error
+	for i := 0; i < c.Limit; i++ {
+		c.wg.Add(1)
+		go c.worker(ctx, jobs)
+	}
 	pollTicker := time.NewTicker(time.Duration(c.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(c.ReportInterval) * time.Second)
 	printBuildInfo(buildVersion, buildDate, buildCommit)
@@ -75,20 +82,20 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 			}
 			count++
 		case <-reportTicker.C:
-			jobs := make(chan *models.Metric, len(values))
-			for i := 0; i < c.Limit; i++ {
-				go c.worker(ctx, jobs)
-			}
 			for k, v := range values {
+
 				jobs <- models.CreateGauge(k, v)
 			}
 			jobs <- models.CreateCounter("PollCount", count)
+			fmt.Println("Start waiting for jobs to finish")
+			fmt.Println("End")
 			close(jobs)
 		}
 	}
 }
 
 func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
+	defer c.wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
@@ -114,16 +121,14 @@ func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
 }
 
 func printBuildInfo(buildVersion string, buildDate string, buildCommit string) {
-	if buildVersion == "" {
-		buildVersion = "N/A"
+	fmt.Printf("Build version: %s\n", ifNan(buildVersion))
+	fmt.Printf("Build date: %s\n", ifNan(buildDate))
+	fmt.Printf("Build commit: %s\n", ifNan(buildCommit))
+}
+
+func ifNan(value string) string {
+	if value == "" {
+		return "N/A"
 	}
-	if buildDate == "" {
-		buildDate = "N/A"
-	}
-	if buildCommit == "" {
-		buildCommit = "N/A"
-	}
-	fmt.Printf("Build version: %s\n", buildVersion)
-	fmt.Printf("Build date: %s\n", buildDate)
-	fmt.Printf("Build commit: %s\n", buildCommit)
+	return value
 }
