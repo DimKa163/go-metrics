@@ -21,6 +21,7 @@ type Collector struct {
 	*Config
 	wg sync.WaitGroup
 	client.MetricClient
+	jobs chan *models.Metric
 }
 
 func NewCollector(conf *Config) (*Collector, error) {
@@ -52,15 +53,14 @@ func NewCollector(conf *Config) (*Collector, error) {
 
 // Run worker
 func (c *Collector) Run(buildVersion string, buildDate string, buildCommit string) error {
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 	var count int64
 	values := make(map[string]float64)
-	jobs := make(chan *models.Metric, c.Limit*4)
+	c.jobs = make(chan *models.Metric, c.Limit*4)
 	var err error
 	for i := 0; i < c.Limit; i++ {
-		c.wg.Add(1)
-		go c.worker(ctx, jobs)
+		go c.worker()
 	}
 	pollTicker := time.NewTicker(time.Duration(c.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(c.ReportInterval) * time.Second)
@@ -68,6 +68,8 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 	for {
 		select {
 		case <-ctx.Done():
+			c.wg.Wait()
+			close(c.jobs)
 			return ctx.Err()
 		case <-pollTicker.C:
 			err = runtime.ReadMemoryStats(values)
@@ -83,28 +85,25 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 			count++
 		case <-reportTicker.C:
 			for k, v := range values {
-
-				jobs <- models.CreateGauge(k, v)
+				c.wg.Add(1)
+				c.jobs <- models.CreateGauge(k, v)
 			}
-			jobs <- models.CreateCounter("PollCount", count)
-			fmt.Println("Start waiting for jobs to finish")
-			fmt.Println("End")
-			close(jobs)
+			c.wg.Add(1)
+			c.jobs <- models.CreateCounter("PollCount", count)
+
 		}
 	}
 }
 
-func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
-	defer c.wg.Done()
+func (c *Collector) worker() {
 	for {
 		select {
-		case <-ctx.Done():
-			return
-		case metric := <-ch:
-			if metric == nil {
+		case metric, ok := <-c.jobs:
+			if !ok {
 				continue
 			}
 			fmt.Println(metric)
+			time.Sleep(time.Duration(1) * time.Second)
 			if metric.Type == models.CounterType {
 				if err := c.UpdateCounter(metric.ID, *metric.Delta); err != nil {
 					fmt.Println(err)
@@ -116,6 +115,7 @@ func (c *Collector) worker(ctx context.Context, ch <-chan *models.Metric) {
 					continue
 				}
 			}
+			c.wg.Done()
 		}
 	}
 }

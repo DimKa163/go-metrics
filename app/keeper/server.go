@@ -135,7 +135,7 @@ func (s *Server) Map() {
 
 // Run app
 func (s *Server) Run(buildVersion string, buildDate string, buildCommit string) error {
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 	if s.useDumpASYNC {
 		s.dumpTask.Start(ctx)

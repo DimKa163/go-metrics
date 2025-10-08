@@ -197,7 +197,7 @@ func getConfig() ([]byte, error) {
 	if _, err := os.Stat(*path); os.IsNotExist(err) {
 		return nil, errors.New("config file not exist")
 	}
-	file, err := os.OpenFile("tsconfig.json", os.O_RDONLY, 0644)
+	file, err := os.OpenFile(*path, os.O_RDONLY, 0644)
 	if err != nil {
 		return nil, err
 	}
