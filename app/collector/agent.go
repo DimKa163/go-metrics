@@ -96,27 +96,23 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 }
 
 func (c *Collector) worker() {
-	for {
-		select {
-		case metric, ok := <-c.jobs:
-			if !ok {
+	for metric := range c.jobs {
+		if metric == nil {
+			continue
+		}
+		fmt.Println(metric)
+		if metric.Type == models.CounterType {
+			if err := c.UpdateCounter(metric.ID, *metric.Delta); err != nil {
+				fmt.Println(err)
 				continue
 			}
-			fmt.Println(metric)
-			time.Sleep(time.Duration(1) * time.Second)
-			if metric.Type == models.CounterType {
-				if err := c.UpdateCounter(metric.ID, *metric.Delta); err != nil {
-					fmt.Println(err)
-					continue
-				}
-			} else if metric.Type == models.GaugeType {
-				if err := c.UpdateGauge(metric.ID, *metric.Value); err != nil {
-					fmt.Println(err)
-					continue
-				}
+		} else if metric.Type == models.GaugeType {
+			if err := c.UpdateGauge(metric.ID, *metric.Value); err != nil {
+				fmt.Println(err)
+				continue
 			}
-			c.wg.Done()
 		}
+		c.wg.Done()
 	}
 }
 
