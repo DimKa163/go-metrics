@@ -72,13 +72,13 @@ func (s *Store) Find(ctx context.Context, key string) (*models.Metric, error) {
 	return metric, nil
 }
 
-func (s *Store) GetAll(ctx context.Context) ([]models.Metric, error) {
+func (s *Store) GetAll(ctx context.Context) ([]*models.Metric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	seconds := s.attempts
 	attempt := 0
 	query := "SELECT id, type,  delta, value FROM metrics ORDER BY id ASC;"
-	metrics, err := backoff.Retry(ctx, func() ([]models.Metric, error) {
+	metrics, err := backoff.Retry(ctx, func() ([]*models.Metric, error) {
 		cursor, err := s.Query(ctx, query)
 		if err != nil {
 			var pgerr *pgconn.PgError
@@ -92,7 +92,7 @@ func (s *Store) GetAll(ctx context.Context) ([]models.Metric, error) {
 			return nil, backoff.Permanent(err)
 		}
 		defer cursor.Close()
-		var metrics []models.Metric
+		var metrics []*models.Metric
 		for cursor.Next() {
 			if err = ctx.Err(); err != nil {
 				return nil, backoff.Permanent(err)
@@ -110,7 +110,7 @@ func (s *Store) GetAll(ctx context.Context) ([]models.Metric, error) {
 				}
 				return nil, backoff.Permanent(err)
 			}
-			metrics = append(metrics, metric)
+			metrics = append(metrics, &metric)
 		}
 		if err = cursor.Err(); err != nil {
 			return nil, backoff.Permanent(err)
@@ -137,7 +137,7 @@ func (s *Store) Upsert(ctx context.Context, metric *models.Metric) error {
 	})
 }
 
-func (s *Store) BatchUpsert(ctx context.Context, metrics []models.Metric) error {
+func (s *Store) BatchUpsert(ctx context.Context, metrics []*models.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	var err error

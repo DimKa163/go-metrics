@@ -1,4 +1,4 @@
-package tripper
+package hclient
 
 import (
 	"bytes"
@@ -6,6 +6,12 @@ import (
 	"io"
 	"net/http"
 )
+
+func UseCryptoHandler(encrypter *crypto.Encrypter) RequestHandler {
+	return func(transport http.RoundTripper) http.RoundTripper {
+		return NewCryptoTripper(transport, encrypter)
+	}
+}
 
 type CryptoTripper struct {
 	rt http.RoundTripper

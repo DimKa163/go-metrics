@@ -1,7 +1,9 @@
-package client
+package hclient
 
 import (
 	"bytes"
+	"context"
+	"github.com/DimKa163/go-metrics/internal/mhttp/contracts"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,15 +13,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/DimKa163/go-metrics/internal/mocks"
-	"github.com/DimKa163/go-metrics/internal/models"
 )
 
 func TestUpdateGauge_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
+	ctx := context.Background()
 	mockDoer := mocks.NewMockHttpExecuter(ctrl)
-	c := &metricClient{client: mockDoer, addr: "http://localhost"}
+	c := &HTTPMetricClient{client: mockDoer, addr: "http://localhost"}
 
 	mockDoer.EXPECT().
 		Do(gomock.Any()).
@@ -33,16 +34,16 @@ func TestUpdateGauge_Success(t *testing.T) {
 			}, nil
 		})
 
-	err := c.UpdateGauge("Alloc", 123.45)
+	err := c.UpdateGauge(ctx, "Alloc", 123.45)
 	assert.NoError(t, err)
 }
 
 func TestUpdateCounter_FailStatus(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
+	ctx := context.Background()
 	mockDoer := mocks.NewMockHttpExecuter(ctrl)
-	c := &metricClient{client: mockDoer, addr: "http://localhost"}
+	c := &HTTPMetricClient{client: mockDoer, addr: "http://localhost"}
 
 	mockDoer.EXPECT().
 		Do(gomock.Any()).
@@ -51,7 +52,7 @@ func TestUpdateCounter_FailStatus(t *testing.T) {
 			Body:       io.NopCloser(bytes.NewBufferString("bad")),
 		}, nil)
 
-	err := c.UpdateCounter("Requests", 10)
+	err := c.UpdateCounter(ctx, "Requests", 10)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unexpected status code")
 }
@@ -60,12 +61,13 @@ func TestBatchUpdate_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	ctx := context.Background()
 	mockDoer := mocks.NewMockHttpExecuter(ctrl)
-	c := &metricClient{client: mockDoer, addr: "http://localhost"}
+	c := &HTTPMetricClient{client: mockDoer, addr: "http://localhost"}
 
-	metrics := []*models.Metric{
-		models.CreateGauge("Alloc", 1.23),
-		models.CreateCounter("Requests", 10),
+	metrics := []*contracts.Metric{
+		contracts.CreateGauge("Alloc", 1.23),
+		contracts.CreateCounter("Requests", 10),
 	}
 
 	mockDoer.EXPECT().
@@ -81,7 +83,7 @@ func TestBatchUpdate_Success(t *testing.T) {
 			}, nil
 		})
 
-	err := c.BatchUpdate(metrics)
+	err := c.BatchUpdate(ctx, metrics)
 	assert.NoError(t, err)
 }
 
@@ -92,18 +94,19 @@ func ExampleNewClient() {
 	}))
 	defer server.Close()
 
+	ctx := context.Background()
 	// создаём клиента
 	c := NewClient(server.URL, nil)
 
 	// обновляем gauge
-	_ = c.UpdateGauge("cpu", 0.95)
+	_ = c.UpdateGauge(ctx, "cpu", 0.95)
 
 	// обновляем counter
-	_ = c.UpdateCounter("requests", 10)
+	_ = c.UpdateCounter(ctx, "requests", 10)
 
 	// batch update
-	_ = c.BatchUpdate([]*models.Metric{
-		models.CreateGauge("memory", 128.0),
-		models.CreateCounter("hits", 42),
+	_ = c.BatchUpdate(ctx, []*contracts.Metric{
+		contracts.CreateGauge("memory", 128.0),
+		contracts.CreateCounter("hits", 42),
 	})
 }

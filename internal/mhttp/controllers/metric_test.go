@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -60,10 +59,6 @@ func TestUpdate(t *testing.T) {
 			assert.Equal(t, c.expectedStatusCode, res.Code)
 		})
 	}
-}
-
-func ExampleNewMetricController() {
-	fmt.Println("Hello world")
 }
 
 func TestUpdateJSON(t *testing.T) {
@@ -294,14 +289,14 @@ func configureFileRepository() *mem.MemoryStore {
 	repository.Upsert(context.Background(), &models.Metric{
 		ID:    "FoundedCounterMetric",
 		Type:  models.CounterType,
-		Delta: &delta,
-		Value: nil,
+		Delta: delta,
+		Value: 0,
 	})
 	repository.Upsert(context.Background(), &models.Metric{
 		ID:    "FoundedGaugeMetric",
 		Type:  models.CounterType,
-		Delta: nil,
-		Value: &value,
+		Delta: 0,
+		Value: value,
 	})
 	return repository
 }

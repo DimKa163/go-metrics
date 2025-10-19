@@ -1,4 +1,4 @@
-package tripper
+package hclient
 
 import (
 	"bytes"
@@ -8,6 +8,12 @@ import (
 	"io"
 	"net/http"
 )
+
+func UseHashHandler(key string) RequestHandler {
+	return func(transport http.RoundTripper) http.RoundTripper {
+		return NewHashTripper(transport, key)
+	}
+}
 
 type HashTripper struct {
 	rt  http.RoundTripper

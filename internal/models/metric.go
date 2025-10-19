@@ -17,19 +17,18 @@ type Gauge float64
 type Counter int64
 
 type Metric struct {
-	ID    string   `json:"id"`
-	Type  string   `json:"type"`
-	Delta *int64   `json:"delta,omitempty"`
-	Value *float64 `json:"value,omitempty"`
+	ID    string  `json:"id"`
+	Type  string  `json:"type"`
+	Delta int64   `json:"delta,omitempty"`
+	Value float64 `json:"value,omitempty"`
 }
 
-func (m *Metric) Update(metric Metric) {
+func (m *Metric) Update(metric *Metric) {
 	switch metric.Type {
 	case GaugeType:
 		m.Value = metric.Value
 	case CounterType:
-		sum := *m.Delta + *metric.Delta
-		m.Delta = &sum
+		m.Delta = m.Delta + metric.Delta
 	}
 }
 
@@ -51,7 +50,7 @@ func CreateCounter(id string, delta int64) *Metric {
 	return &Metric{
 		ID:    id,
 		Type:  CounterType,
-		Delta: &delta,
+		Delta: delta,
 	}
 }
 
@@ -59,7 +58,7 @@ func CreateGauge(id string, value float64) *Metric {
 	return &Metric{
 		ID:    id,
 		Type:  GaugeType,
-		Value: &value,
+		Value: value,
 	}
 }
 func CreateMetric(tt string, name string, value string) (Metric, error) {
@@ -72,7 +71,7 @@ func CreateMetric(tt string, name string, value string) (Metric, error) {
 		return Metric{
 			ID:    name,
 			Type:  GaugeType,
-			Value: &val,
+			Value: val,
 		}, nil
 	case CounterType:
 		val, err := strconv.ParseInt(value, 10, 64)
@@ -82,7 +81,7 @@ func CreateMetric(tt string, name string, value string) (Metric, error) {
 		return Metric{
 			ID:    name,
 			Type:  CounterType,
-			Delta: &val,
+			Delta: val,
 		}, nil
 	default:
 		return Metric{}, ErrUnknownMetricType

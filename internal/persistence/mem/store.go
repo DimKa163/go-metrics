@@ -53,12 +53,12 @@ func (s *MemoryStore) Find(_ context.Context, key string) (*models.Metric, error
 	return nil, persistence.ErrMetricNotFound
 }
 
-func (s *MemoryStore) GetAll(_ context.Context) ([]models.Metric, error) {
+func (s *MemoryStore) GetAll(_ context.Context) ([]*models.Metric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
-	var result []models.Metric
+	var result []*models.Metric
 	for _, metric := range s.metrics {
-		result = append(result, *metric)
+		result = append(result, metric)
 	}
 	return result, nil
 
@@ -70,26 +70,26 @@ func (s *MemoryStore) Upsert(_ context.Context, metric *models.Metric) error {
 	delete(s.metrics, metric.ID)
 	s.metrics[metric.ID] = metric
 	if s.option.UseSYNC {
-		var result []models.Metric
+		var result []*models.Metric
 		for _, met := range s.metrics {
-			result = append(result, *met)
+			result = append(result, met)
 		}
 		return s.filer.Dump(result)
 	}
 	return nil
 }
 
-func (s *MemoryStore) BatchUpsert(_ context.Context, metrics []models.Metric) error {
+func (s *MemoryStore) BatchUpsert(_ context.Context, metrics []*models.Metric) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	for _, metric := range metrics {
 		delete(s.metrics, metric.ID)
-		s.metrics[metric.ID] = &metric
+		s.metrics[metric.ID] = metric
 	}
 	if s.option.UseSYNC {
-		var result []models.Metric
+		var result []*models.Metric
 		for _, met := range s.metrics {
-			result = append(result, *met)
+			result = append(result, met)
 		}
 		return s.filer.Dump(result)
 	}

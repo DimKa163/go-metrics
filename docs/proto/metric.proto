@@ -1,0 +1,20 @@
+syntax = "proto3";
+package go_metric;
+
+
+option go_package = "metric/proto";
+
+
+message Metric {
+  string id = 1;
+
+  MetricType type = 2;
+  double value = 3;
+  int64 delta = 4;
+}
+
+enum MetricType {
+  UNRECOGNIZED  = 0;
+  GAUGE = 1;
+  COUNTER = 2;
+}

@@ -21,7 +21,7 @@ func TestGetShouldReturnMetricWhenMetricExists(t *testing.T) {
 	service := NewMetricService(mockRepository)
 	metric := getTestCounterMetric(500)
 	id := metric.ID
-	mockRepository.EXPECT().Find(ctx, id).Return(&metric, nil)
+	mockRepository.EXPECT().Find(ctx, id).Return(metric, nil)
 
 	sut, err := service.Get(ctx, id)
 
@@ -37,12 +37,11 @@ func TestGetShouldReturnMetricWhenMetricDoesNotExist(t *testing.T) {
 	mockRepository := mocks.NewMockRepository(ctrl)
 	service := NewMetricService(mockRepository)
 	id := "NotExistsMetric"
-	metric := models.Metric{}
 	mockRepository.EXPECT().Find(ctx, id).Return(nil, persistence.ErrMetricNotFound)
 	sut, err := service.Get(ctx, id)
 
 	assert.ErrorIs(t, err, ErrMetricNotFound)
-	assert.Equal(t, metric, sut)
+	assert.Nil(t, sut)
 }
 
 func TestGetAllShouldSuccess(t *testing.T) {
@@ -52,7 +51,7 @@ func TestGetAllShouldSuccess(t *testing.T) {
 
 	mockRepository := mocks.NewMockRepository(ctrl)
 	service := NewMetricService(mockRepository)
-	metrics := []models.Metric{
+	metrics := []*models.Metric{
 		getTestCounterMetric(5),
 		getTestGaugeMetric(23.32),
 	}
@@ -73,11 +72,11 @@ func TestUpdateGaugeWhenMetricExistShouldSuccess(t *testing.T) {
 	service := NewMetricService(mockRepository)
 	exitsMetric := getTestGaugeMetric(23.32)
 	newMetric := exitsMetric
-	value := float64(300.23)
-	newMetric.Value = &value
+	value := 300.23
+	newMetric.Value = value
 	id := exitsMetric.ID
-	mockRepository.EXPECT().Find(ctx, id).Return(&exitsMetric, nil)
-	mockRepository.EXPECT().Upsert(ctx, &newMetric).Return(nil)
+	mockRepository.EXPECT().Find(ctx, id).Return(exitsMetric, nil)
+	mockRepository.EXPECT().Upsert(ctx, newMetric).Return(nil)
 
 	sut, err := service.Upsert(ctx, newMetric)
 
@@ -95,7 +94,7 @@ func TestUpdateGaugeWhenMetricDoesNotExistShouldSuccess(t *testing.T) {
 	newMetric := getTestGaugeMetric(23.23)
 	id := newMetric.ID
 	mockRepository.EXPECT().Find(ctx, id).Return(nil, persistence.ErrMetricNotFound)
-	mockRepository.EXPECT().Upsert(ctx, &newMetric).Return(nil)
+	mockRepository.EXPECT().Upsert(ctx, newMetric).Return(nil)
 
 	sut, err := service.Upsert(ctx, newMetric)
 
@@ -110,19 +109,15 @@ func TestUpdateCounterWhenMetricExistShouldSuccess(t *testing.T) {
 
 	mockRepository := mocks.NewMockRepository(ctrl)
 	service := NewMetricService(mockRepository)
-	exitsMetric := getTestCounterMetric(5)
+	existsMetric := getTestCounterMetric(5)
 	expectedMetric := getTestCounterMetric(155)
-	newMetric := exitsMetric
 	delta := int64(150)
-	newMetric.Delta = &delta
-	id := exitsMetric.ID
+	newMetric := getTestCounterMetric(delta)
 
-	mockRepository.EXPECT().Find(ctx, id).Return(&exitsMetric, nil)
-	mockRepository.EXPECT().Upsert(ctx, &exitsMetric).Return(nil)
+	mockRepository.EXPECT().Find(ctx, existsMetric.ID).Return(existsMetric, nil)
+	mockRepository.EXPECT().Upsert(ctx, existsMetric).Return(nil)
 
 	sut, err := service.Upsert(ctx, newMetric)
-
-	exitsMetric.Update(newMetric)
 	assert.NoError(t, err, "update metric should be successful")
 	assert.Equal(t, expectedMetric, sut, "update metric should return true metric")
 }
@@ -137,7 +132,7 @@ func TestUpdateCounterWhenMetricDoesNotExistShouldSuccess(t *testing.T) {
 	newMetric := getTestCounterMetric(500)
 	id := newMetric.ID
 	mockRepository.EXPECT().Find(ctx, id).Return(nil, persistence.ErrMetricNotFound)
-	mockRepository.EXPECT().Upsert(ctx, &newMetric).Return(nil)
+	mockRepository.EXPECT().Upsert(ctx, newMetric).Return(nil)
 
 	sut, err := service.Upsert(ctx, newMetric)
 
@@ -149,20 +144,20 @@ func TestBatchUpdateShouldSuccess(t *testing.T) {
 
 }
 
-func getTestGaugeMetric(value float64) models.Metric {
-	metric := models.Metric{
+func getTestGaugeMetric(value float64) *models.Metric {
+	metric := &models.Metric{
 		ID:    "TestGaugeMetric",
 		Type:  models.GaugeType,
-		Value: &value,
+		Value: value,
 	}
 	return metric
 }
 
-func getTestCounterMetric(delta int64) models.Metric {
-	metric := models.Metric{
+func getTestCounterMetric(delta int64) *models.Metric {
+	metric := &models.Metric{
 		ID:    "TestCounterMetric",
 		Type:  models.CounterType,
-		Delta: &delta,
+		Delta: delta,
 	}
 	return metric
 }

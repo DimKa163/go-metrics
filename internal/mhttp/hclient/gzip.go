@@ -1,4 +1,4 @@
-package tripper
+package hclient
 
 import (
 	"bytes"
@@ -7,6 +7,12 @@ import (
 	"net/http"
 	"strconv"
 )
+
+func UseGzipHandler() RequestHandler {
+	return func(transport http.RoundTripper) http.RoundTripper {
+		return NewGzip(transport)
+	}
+}
 
 type GzipTripper struct {
 	rt http.RoundTripper

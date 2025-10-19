@@ -7,4 +7,5 @@ type Config struct {
 	Key               string `arg:"k" envArg:"KEY" json:"key"`
 	Limit             int    `arg:"r" envArg:"RATE_LIMIT" json:"rate_limit"`
 	PublicKeyFilePath string `arg:"c" envArg:"CRYPTO_KEY" json:"crypto_key"`
+	UseGrpc           bool   `arg:"ga" envArg:"USE_GRPC" json:"use_grpc"`
 }
