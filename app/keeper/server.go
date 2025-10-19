@@ -165,7 +165,6 @@ func (s *Server) backup(ctx context.Context) error {
 func CreateServerImpl(services *ServiceContainer, config *Config) (ServerImpl, error) {
 	var httpServer *HTTPServer
 	var grpcServer *GRPCServer
-	var err error
 	if config.Addr != "" {
 		router := gin.New()
 		router.Use(gin.Recovery())
@@ -184,10 +183,7 @@ func CreateServerImpl(services *ServiceContainer, config *Config) (ServerImpl, e
 		if config.Key != "" {
 			router.Use(middleware.Hash(config.Key))
 		}
-		httpServer, err = NewHTTPServer(services, config.Addr, router), nil
-		if err != nil {
-			return nil, err
-		}
+		httpServer = NewHTTPServer(services, config.Addr, router)
 	}
 	if config.GRPCAddr != "" {
 		listener, err := net.Listen("tcp", config.GRPCAddr)
@@ -205,10 +201,7 @@ func CreateServerImpl(services *ServiceContainer, config *Config) (ServerImpl, e
 		}
 
 		serv := grpc.NewServer(grpc.ChainUnaryInterceptor(chain...))
-		grpcServer, err = NewGRPCServer(listener, serv, services), nil
-		if err != nil {
-			return nil, err
-		}
+		grpcServer = NewGRPCServer(listener, serv, services)
 	}
 	if httpServer != nil && grpcServer != nil {
 		return NewCompositeServer(grpcServer, httpServer), nil
