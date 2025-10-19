@@ -2,4 +2,4 @@ mockgen -source=I:\GoLand\go-metrics\internal\persistence\repository.go -destina
 mockgen -source=I:\GoLand\go-metrics\internal/client/client.go -destination=I:\GoLand\go-metrics\internal\mocks\mock_client.go -package=mocks
 
 PROTO
-from internal protoc --proto_path=gc/proto --go_out=./gc/gen --go_opt=paths=source_relative  --go-grpc_out=./gc/gen --go-grpc_opt=paths=source_relative gc/proto/metric.proto gc/proto/metric_service.proto
+protoc --go_out=./internal/gc/proto --go_opt=paths=import --go-grpc_out=.  docs/proto/metric.proto docs/proto/metric_service.proto

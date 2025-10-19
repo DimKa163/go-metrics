@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func UseGzipHandler() RequestHandler {
+func UseGzipHandler() RequestHandlerFactory {
 	return func(transport http.RoundTripper) http.RoundTripper {
 		return NewGzip(transport)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/DimKa163/go-metrics/internal/mhttp/hclient"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"net"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -114,17 +115,21 @@ func ifNan(value string) string {
 }
 
 func CreateClient(conf *Config) (client.MetricClient, error) {
+	ip, err := getLocalIP()
+	if err != nil {
+		return nil, err
+	}
 	if conf.UseGrpc {
 		return CreateGRPCMetricClient(conf.Addr,
 			gclient.UnaryRetryInterceptor(),
 			gclient.UnaryLoggingInterceptor(),
-			gclient.UnaryIdentifyInterceptor())
+			gclient.UnaryIdentifyInterceptor(ip))
 	}
 
-	tripperFc := []hclient.RequestHandler{
+	tripperFc := []hclient.RequestHandlerFactory{
 		hclient.UseRetryHandler(),
 		hclient.UseGzipHandler(),
-		hclient.UseIdentifyHandler(),
+		hclient.UseIdentifyHandler(ip),
 	}
 	if conf.Key != "" {
 		tripperFc = append(tripperFc, hclient.UseHashHandler(conf.Key))
@@ -150,6 +155,16 @@ func CreateGRPCMetricClient(addr string, interceptors ...grpc.UnaryClientInterce
 	return gclient.NewGRPCMetricClient(conn), nil
 }
 
-func CreateHTTPMetricClient(protocol, addr string, handlers ...hclient.RequestHandler) *hclient.HTTPMetricClient {
+func CreateHTTPMetricClient(protocol, addr string, handlers ...hclient.RequestHandlerFactory) *hclient.HTTPMetricClient {
 	return hclient.NewClient(fmt.Sprintf("%s://%s", protocol, addr), handlers...)
+}
+
+func getLocalIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
 }

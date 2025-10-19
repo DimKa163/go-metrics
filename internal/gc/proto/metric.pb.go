@@ -2,15 +2,15 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: metric.proto
+// source: docs/proto/metric.proto
 
 package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	_ "google.golang.org/protobuf/types/gofeaturespb"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -54,35 +54,32 @@ func (x MetricType) String() string {
 }
 
 func (MetricType) Descriptor() protoreflect.EnumDescriptor {
-	return file_metric_proto_enumTypes[0].Descriptor()
+	return file_docs_proto_metric_proto_enumTypes[0].Descriptor()
 }
 
 func (MetricType) Type() protoreflect.EnumType {
-	return &file_metric_proto_enumTypes[0]
+	return &file_docs_proto_metric_proto_enumTypes[0]
 }
 
 func (x MetricType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use MetricType.Descriptor instead.
-func (MetricType) EnumDescriptor() ([]byte, []int) {
-	return file_metric_proto_rawDescGZIP(), []int{0}
-}
-
 type Metric struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type          MetricType             `protobuf:"varint,2,opt,name=type,proto3,enum=go_metric.MetricType" json:"type,omitempty"`
-	Value         float64                `protobuf:"fixed64,3,opt,name=value,proto3" json:"value,omitempty"`
-	Delta         int64                  `protobuf:"varint,4,opt,name=delta,proto3" json:"delta,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          *string                `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Type        MetricType             `protobuf:"varint,2,opt,name=type,enum=go_metric.MetricType"`
+	xxx_hidden_Value       float64                `protobuf:"fixed64,3,opt,name=value"`
+	xxx_hidden_Delta       int64                  `protobuf:"varint,4,opt,name=delta"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Metric) Reset() {
 	*x = Metric{}
-	mi := &file_metric_proto_msgTypes[0]
+	mi := &file_docs_proto_metric_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -94,7 +91,7 @@ func (x *Metric) String() string {
 func (*Metric) ProtoMessage() {}
 
 func (x *Metric) ProtoReflect() protoreflect.Message {
-	mi := &file_metric_proto_msgTypes[0]
+	mi := &file_docs_proto_metric_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -105,44 +102,144 @@ func (x *Metric) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Metric.ProtoReflect.Descriptor instead.
-func (*Metric) Descriptor() ([]byte, []int) {
-	return file_metric_proto_rawDescGZIP(), []int{0}
-}
-
 func (x *Metric) GetId() string {
 	if x != nil {
-		return x.Id
+		if x.xxx_hidden_Id != nil {
+			return *x.xxx_hidden_Id
+		}
+		return ""
 	}
 	return ""
 }
 
 func (x *Metric) GetType() MetricType {
 	if x != nil {
-		return x.Type
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 1) {
+			return x.xxx_hidden_Type
+		}
 	}
 	return MetricType_UNRECOGNIZED
 }
 
 func (x *Metric) GetValue() float64 {
 	if x != nil {
-		return x.Value
+		return x.xxx_hidden_Value
 	}
 	return 0
 }
 
 func (x *Metric) GetDelta() int64 {
 	if x != nil {
-		return x.Delta
+		return x.xxx_hidden_Delta
 	}
 	return 0
 }
 
-var File_metric_proto protoreflect.FileDescriptor
+func (x *Metric) SetId(v string) {
+	x.xxx_hidden_Id = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
+}
 
-const file_metric_proto_rawDesc = "" +
+func (x *Metric) SetType(v MetricType) {
+	x.xxx_hidden_Type = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
+}
+
+func (x *Metric) SetValue(v float64) {
+	x.xxx_hidden_Value = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *Metric) SetDelta(v int64) {
+	x.xxx_hidden_Delta = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
+}
+
+func (x *Metric) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Metric) HasType() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Metric) HasValue() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *Metric) HasDelta() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *Metric) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = nil
+}
+
+func (x *Metric) ClearType() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Type = MetricType_UNRECOGNIZED
+}
+
+func (x *Metric) ClearValue() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Value = 0
+}
+
+func (x *Metric) ClearDelta() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Delta = 0
+}
+
+type Metric_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id    *string
+	Type  *MetricType
+	Value *float64
+	Delta *int64
+}
+
+func (b0 Metric_builder) Build() *Metric {
+	m0 := &Metric{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
+		x.xxx_hidden_Id = b.Id
+	}
+	if b.Type != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
+		x.xxx_hidden_Type = *b.Type
+	}
+	if b.Value != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_Value = *b.Value
+	}
+	if b.Delta != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_Delta = *b.Delta
+	}
+	return m0
+}
+
+var File_docs_proto_metric_proto protoreflect.FileDescriptor
+
+const file_docs_proto_metric_proto_rawDesc = "" +
 	"\n" +
-	"\fmetric.proto\x12\tgo_metric\"o\n" +
+	"\x17docs/proto/metric.proto\x12\tgo_metric\x1a!google/protobuf/go_features.proto\"o\n" +
 	"\x06Metric\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x15.go_metric.MetricTypeR\x04type\x12\x14\n" +
@@ -152,27 +249,15 @@ const file_metric_proto_rawDesc = "" +
 	"MetricType\x12\x10\n" +
 	"\fUNRECOGNIZED\x10\x00\x12\t\n" +
 	"\x05GAUGE\x10\x01\x12\v\n" +
-	"\aCOUNTER\x10\x02B\x0eZ\fmetric/protob\x06proto3"
+	"\aCOUNTER\x10\x02B\x10Z\x06/proto\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var (
-	file_metric_proto_rawDescOnce sync.Once
-	file_metric_proto_rawDescData []byte
-)
-
-func file_metric_proto_rawDescGZIP() []byte {
-	file_metric_proto_rawDescOnce.Do(func() {
-		file_metric_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_metric_proto_rawDesc), len(file_metric_proto_rawDesc)))
-	})
-	return file_metric_proto_rawDescData
-}
-
-var file_metric_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_metric_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_metric_proto_goTypes = []any{
+var file_docs_proto_metric_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_docs_proto_metric_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_docs_proto_metric_proto_goTypes = []any{
 	(MetricType)(0), // 0: go_metric.MetricType
 	(*Metric)(nil),  // 1: go_metric.Metric
 }
-var file_metric_proto_depIdxs = []int32{
+var file_docs_proto_metric_proto_depIdxs = []int32{
 	0, // 0: go_metric.Metric.type:type_name -> go_metric.MetricType
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -181,27 +266,27 @@ var file_metric_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_metric_proto_init() }
-func file_metric_proto_init() {
-	if File_metric_proto != nil {
+func init() { file_docs_proto_metric_proto_init() }
+func file_docs_proto_metric_proto_init() {
+	if File_docs_proto_metric_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metric_proto_rawDesc), len(file_metric_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_docs_proto_metric_proto_rawDesc), len(file_docs_proto_metric_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_metric_proto_goTypes,
-		DependencyIndexes: file_metric_proto_depIdxs,
-		EnumInfos:         file_metric_proto_enumTypes,
-		MessageInfos:      file_metric_proto_msgTypes,
+		GoTypes:           file_docs_proto_metric_proto_goTypes,
+		DependencyIndexes: file_docs_proto_metric_proto_depIdxs,
+		EnumInfos:         file_docs_proto_metric_proto_enumTypes,
+		MessageInfos:      file_docs_proto_metric_proto_msgTypes,
 	}.Build()
-	File_metric_proto = out.File
-	file_metric_proto_goTypes = nil
-	file_metric_proto_depIdxs = nil
+	File_docs_proto_metric_proto = out.File
+	file_docs_proto_metric_proto_goTypes = nil
+	file_docs_proto_metric_proto_depIdxs = nil
 }

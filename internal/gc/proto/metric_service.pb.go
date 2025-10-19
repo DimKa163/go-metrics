@@ -2,15 +2,15 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.0
-// source: metric_service.proto
+// source: docs/proto/metric_service.proto
 
 package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	_ "google.golang.org/protobuf/types/gofeaturespb"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -22,16 +22,18 @@ const (
 )
 
 type GetMetric struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          MetricType             `protobuf:"varint,1,opt,name=type,proto3,enum=go_metric.MetricType" json:"type,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Type        MetricType             `protobuf:"varint,1,opt,name=type,enum=go_metric.MetricType"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *GetMetric) Reset() {
 	*x = GetMetric{}
-	mi := &file_metric_service_proto_msgTypes[0]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +45,7 @@ func (x *GetMetric) String() string {
 func (*GetMetric) ProtoMessage() {}
 
 func (x *GetMetric) ProtoReflect() protoreflect.Message {
-	mi := &file_metric_service_proto_msgTypes[0]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,35 +56,91 @@ func (x *GetMetric) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMetric.ProtoReflect.Descriptor instead.
-func (*GetMetric) Descriptor() ([]byte, []int) {
-	return file_metric_service_proto_rawDescGZIP(), []int{0}
-}
-
 func (x *GetMetric) GetType() MetricType {
 	if x != nil {
-		return x.Type
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 0) {
+			return x.xxx_hidden_Type
+		}
 	}
 	return MetricType_UNRECOGNIZED
 }
 
 func (x *GetMetric) GetName() string {
 	if x != nil {
-		return x.Name
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
 	}
 	return ""
 }
 
+func (x *GetMetric) SetType(v MetricType) {
+	x.xxx_hidden_Type = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *GetMetric) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *GetMetric) HasType() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *GetMetric) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *GetMetric) ClearType() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Type = MetricType_UNRECOGNIZED
+}
+
+func (x *GetMetric) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+type GetMetric_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Type *MetricType
+	Name *string
+}
+
+func (b0 GetMetric_builder) Build() *GetMetric {
+	m0 := &GetMetric{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Type != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Type = *b.Type
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Name = b.Name
+	}
+	return m0
+}
+
 type UpdateMetric struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metric        *Metric                `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Metric *Metric                `protobuf:"bytes,1,opt,name=metric"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *UpdateMetric) Reset() {
 	*x = UpdateMetric{}
-	mi := &file_metric_service_proto_msgTypes[1]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -94,7 +152,7 @@ func (x *UpdateMetric) String() string {
 func (*UpdateMetric) ProtoMessage() {}
 
 func (x *UpdateMetric) ProtoReflect() protoreflect.Message {
-	mi := &file_metric_service_proto_msgTypes[1]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -105,29 +163,55 @@ func (x *UpdateMetric) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateMetric.ProtoReflect.Descriptor instead.
-func (*UpdateMetric) Descriptor() ([]byte, []int) {
-	return file_metric_service_proto_rawDescGZIP(), []int{1}
-}
-
 func (x *UpdateMetric) GetMetric() *Metric {
 	if x != nil {
-		return x.Metric
+		return x.xxx_hidden_Metric
 	}
 	return nil
 }
 
+func (x *UpdateMetric) SetMetric(v *Metric) {
+	x.xxx_hidden_Metric = v
+}
+
+func (x *UpdateMetric) HasMetric() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Metric != nil
+}
+
+func (x *UpdateMetric) ClearMetric() {
+	x.xxx_hidden_Metric = nil
+}
+
+type UpdateMetric_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Metric *Metric
+}
+
+func (b0 UpdateMetric_builder) Build() *UpdateMetric {
+	m0 := &UpdateMetric{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Metric = b.Metric
+	return m0
+}
+
 type MetricResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metric        *Metric                `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
-	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Metric      *Metric                `protobuf:"bytes,1,opt,name=metric"`
+	xxx_hidden_Error       *string                `protobuf:"bytes,2,opt,name=error"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *MetricResponse) Reset() {
 	*x = MetricResponse{}
-	mi := &file_metric_service_proto_msgTypes[2]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -139,7 +223,7 @@ func (x *MetricResponse) String() string {
 func (*MetricResponse) ProtoMessage() {}
 
 func (x *MetricResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metric_service_proto_msgTypes[2]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -150,35 +234,84 @@ func (x *MetricResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MetricResponse.ProtoReflect.Descriptor instead.
-func (*MetricResponse) Descriptor() ([]byte, []int) {
-	return file_metric_service_proto_rawDescGZIP(), []int{2}
-}
-
 func (x *MetricResponse) GetMetric() *Metric {
 	if x != nil {
-		return x.Metric
+		return x.xxx_hidden_Metric
 	}
 	return nil
 }
 
 func (x *MetricResponse) GetError() string {
 	if x != nil {
-		return x.Error
+		if x.xxx_hidden_Error != nil {
+			return *x.xxx_hidden_Error
+		}
+		return ""
 	}
 	return ""
 }
 
+func (x *MetricResponse) SetMetric(v *Metric) {
+	x.xxx_hidden_Metric = v
+}
+
+func (x *MetricResponse) SetError(v string) {
+	x.xxx_hidden_Error = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *MetricResponse) HasMetric() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Metric != nil
+}
+
+func (x *MetricResponse) HasError() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *MetricResponse) ClearMetric() {
+	x.xxx_hidden_Metric = nil
+}
+
+func (x *MetricResponse) ClearError() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Error = nil
+}
+
+type MetricResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Metric *Metric
+	Error  *string
+}
+
+func (b0 MetricResponse_builder) Build() *MetricResponse {
+	m0 := &MetricResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Metric = b.Metric
+	if b.Error != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Error = b.Error
+	}
+	return m0
+}
+
 type BatchUpdateMetric struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Metric        []*Metric              `protobuf:"bytes,1,rep,name=metric,proto3" json:"metric,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Metric *[]*Metric             `protobuf:"bytes,1,rep,name=metric"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *BatchUpdateMetric) Reset() {
 	*x = BatchUpdateMetric{}
-	mi := &file_metric_service_proto_msgTypes[3]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -190,7 +323,7 @@ func (x *BatchUpdateMetric) String() string {
 func (*BatchUpdateMetric) ProtoMessage() {}
 
 func (x *BatchUpdateMetric) ProtoReflect() protoreflect.Message {
-	mi := &file_metric_service_proto_msgTypes[3]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,28 +334,45 @@ func (x *BatchUpdateMetric) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use BatchUpdateMetric.ProtoReflect.Descriptor instead.
-func (*BatchUpdateMetric) Descriptor() ([]byte, []int) {
-	return file_metric_service_proto_rawDescGZIP(), []int{3}
-}
-
 func (x *BatchUpdateMetric) GetMetric() []*Metric {
 	if x != nil {
-		return x.Metric
+		if x.xxx_hidden_Metric != nil {
+			return *x.xxx_hidden_Metric
+		}
 	}
 	return nil
 }
 
+func (x *BatchUpdateMetric) SetMetric(v []*Metric) {
+	x.xxx_hidden_Metric = &v
+}
+
+type BatchUpdateMetric_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Metric []*Metric
+}
+
+func (b0 BatchUpdateMetric_builder) Build() *BatchUpdateMetric {
+	m0 := &BatchUpdateMetric{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Metric = &b.Metric
+	return m0
+}
+
 type BatchUpdateMetricResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Error         string                 `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Error       *string                `protobuf:"bytes,1,opt,name=error"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *BatchUpdateMetricResponse) Reset() {
 	*x = BatchUpdateMetricResponse{}
-	mi := &file_metric_service_proto_msgTypes[4]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +384,7 @@ func (x *BatchUpdateMetricResponse) String() string {
 func (*BatchUpdateMetricResponse) ProtoMessage() {}
 
 func (x *BatchUpdateMetricResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metric_service_proto_msgTypes[4]
+	mi := &file_docs_proto_metric_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,23 +395,55 @@ func (x *BatchUpdateMetricResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use BatchUpdateMetricResponse.ProtoReflect.Descriptor instead.
-func (*BatchUpdateMetricResponse) Descriptor() ([]byte, []int) {
-	return file_metric_service_proto_rawDescGZIP(), []int{4}
-}
-
 func (x *BatchUpdateMetricResponse) GetError() string {
 	if x != nil {
-		return x.Error
+		if x.xxx_hidden_Error != nil {
+			return *x.xxx_hidden_Error
+		}
+		return ""
 	}
 	return ""
 }
 
-var File_metric_service_proto protoreflect.FileDescriptor
+func (x *BatchUpdateMetricResponse) SetError(v string) {
+	x.xxx_hidden_Error = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
 
-const file_metric_service_proto_rawDesc = "" +
+func (x *BatchUpdateMetricResponse) HasError() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *BatchUpdateMetricResponse) ClearError() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Error = nil
+}
+
+type BatchUpdateMetricResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Error *string
+}
+
+func (b0 BatchUpdateMetricResponse_builder) Build() *BatchUpdateMetricResponse {
+	m0 := &BatchUpdateMetricResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Error != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Error = b.Error
+	}
+	return m0
+}
+
+var File_docs_proto_metric_service_proto protoreflect.FileDescriptor
+
+const file_docs_proto_metric_service_proto_rawDesc = "" +
 	"\n" +
-	"\x14metric_service.proto\x12\tgo_metric\x1a\fmetric.proto\"J\n" +
+	"\x1fdocs/proto/metric_service.proto\x12\tgo_metric\x1a\x17docs/proto/metric.proto\x1a!google/protobuf/go_features.proto\"J\n" +
 	"\tGetMetric\x12)\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x15.go_metric.MetricTypeR\x04type\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"9\n" +
@@ -277,22 +459,10 @@ const file_metric_service_proto_rawDesc = "" +
 	"\aMetrics\x126\n" +
 	"\x03Get\x12\x14.go_metric.GetMetric\x1a\x19.go_metric.MetricResponse\x12<\n" +
 	"\x06Update\x12\x17.go_metric.UpdateMetric\x1a\x19.go_metric.MetricResponse\x12Q\n" +
-	"\vBatchUpdate\x12\x1c.go_metric.BatchUpdateMetric\x1a$.go_metric.BatchUpdateMetricResponseB\x0eZ\fmetric/protob\x06proto3"
+	"\vBatchUpdate\x12\x1c.go_metric.BatchUpdateMetric\x1a$.go_metric.BatchUpdateMetricResponseB\x10Z\x06/proto\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var (
-	file_metric_service_proto_rawDescOnce sync.Once
-	file_metric_service_proto_rawDescData []byte
-)
-
-func file_metric_service_proto_rawDescGZIP() []byte {
-	file_metric_service_proto_rawDescOnce.Do(func() {
-		file_metric_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_metric_service_proto_rawDesc), len(file_metric_service_proto_rawDesc)))
-	})
-	return file_metric_service_proto_rawDescData
-}
-
-var file_metric_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_metric_service_proto_goTypes = []any{
+var file_docs_proto_metric_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_docs_proto_metric_service_proto_goTypes = []any{
 	(*GetMetric)(nil),                 // 0: go_metric.GetMetric
 	(*UpdateMetric)(nil),              // 1: go_metric.UpdateMetric
 	(*MetricResponse)(nil),            // 2: go_metric.MetricResponse
@@ -301,7 +471,7 @@ var file_metric_service_proto_goTypes = []any{
 	(MetricType)(0),                   // 5: go_metric.MetricType
 	(*Metric)(nil),                    // 6: go_metric.Metric
 }
-var file_metric_service_proto_depIdxs = []int32{
+var file_docs_proto_metric_service_proto_depIdxs = []int32{
 	5, // 0: go_metric.GetMetric.type:type_name -> go_metric.MetricType
 	6, // 1: go_metric.UpdateMetric.metric:type_name -> go_metric.Metric
 	6, // 2: go_metric.MetricResponse.metric:type_name -> go_metric.Metric
@@ -319,27 +489,27 @@ var file_metric_service_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_metric_service_proto_init() }
-func file_metric_service_proto_init() {
-	if File_metric_service_proto != nil {
+func init() { file_docs_proto_metric_service_proto_init() }
+func file_docs_proto_metric_service_proto_init() {
+	if File_docs_proto_metric_service_proto != nil {
 		return
 	}
-	file_metric_proto_init()
+	file_docs_proto_metric_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metric_service_proto_rawDesc), len(file_metric_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_docs_proto_metric_service_proto_rawDesc), len(file_docs_proto_metric_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_metric_service_proto_goTypes,
-		DependencyIndexes: file_metric_service_proto_depIdxs,
-		MessageInfos:      file_metric_service_proto_msgTypes,
+		GoTypes:           file_docs_proto_metric_service_proto_goTypes,
+		DependencyIndexes: file_docs_proto_metric_service_proto_depIdxs,
+		MessageInfos:      file_docs_proto_metric_service_proto_msgTypes,
 	}.Build()
-	File_metric_service_proto = out.File
-	file_metric_service_proto_goTypes = nil
-	file_metric_service_proto_depIdxs = nil
+	File_docs_proto_metric_service_proto = out.File
+	file_docs_proto_metric_service_proto_goTypes = nil
+	file_docs_proto_metric_service_proto_depIdxs = nil
 }

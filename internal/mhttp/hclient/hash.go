@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func UseHashHandler(key string) RequestHandler {
+func UseHashHandler(key string) RequestHandlerFactory {
 	return func(transport http.RoundTripper) http.RoundTripper {
 		return NewHashTripper(transport, key)
 	}

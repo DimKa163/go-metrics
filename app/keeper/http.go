@@ -44,6 +44,8 @@ func (hs *HTTPServer) Map() {
 		c.String(http.StatusOK, "pong")
 	})
 	hs.services.MetricController.Map(hs.Engine)
+
+	hs.Engine.LoadHTMLFiles("views/home.tmpl")
 }
 
 func (hs *HTTPServer) Shutdown(ctx context.Context) error {

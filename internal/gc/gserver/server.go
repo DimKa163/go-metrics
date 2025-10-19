@@ -26,31 +26,32 @@ func (ms *MetricServer) Register(server *grpc.Server) {
 }
 func (ms *MetricServer) Get(ctx context.Context, in *proto.GetMetric) (*proto.MetricResponse, error) {
 	var resp proto.MetricResponse
-	m, err := ms.app.Get(ctx, in.Name)
+	m, err := ms.app.Get(ctx, in.GetName())
 	if err != nil {
 		if errors.Is(err, persistence.ErrMetricNotFound) {
 			return nil, status.Error(codes.NotFound, "resource not found")
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	resp.Metric = toOut(m)
+	resp.SetMetric(toOut(m))
 	return &resp, nil
 }
 
 func (ms *MetricServer) Update(ctx context.Context, in *proto.UpdateMetric) (*proto.MetricResponse, error) {
 	var resp proto.MetricResponse
-	m, err := ms.app.Upsert(ctx, toIn(in.Metric))
+	m, err := ms.app.Upsert(ctx, toIn(in.GetMetric()))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	resp.Metric = toOut(m)
+	resp.SetMetric(toOut(m))
 	return &resp, nil
 }
 
 func (ms *MetricServer) BatchUpdate(ctx context.Context, in *proto.BatchUpdateMetric) (*proto.BatchUpdateMetricResponse, error) {
 	var resp proto.BatchUpdateMetricResponse
-	metrics := make([]*models.Metric, len(in.Metric))
-	for i, m := range in.Metric {
+	data := in.GetMetric()
+	metrics := make([]*models.Metric, len(data))
+	for i, m := range data {
 		metrics[i] = toIn(m)
 	}
 	err := ms.app.BatchUpdate(ctx, metrics)
@@ -64,26 +65,26 @@ func toOut(metric *models.Metric) *proto.Metric {
 	var m proto.Metric
 	switch metric.Type {
 	case models.CounterType:
-		m.Type = proto.MetricType_COUNTER
-		m.Delta = metric.Delta
+		m.SetType(proto.MetricType_COUNTER)
+		m.SetDelta(metric.Delta)
 	case models.GaugeType:
-		m.Type = proto.MetricType_GAUGE
-		m.Value = metric.Value
+		m.SetType(proto.MetricType_GAUGE)
+		m.SetValue(metric.Value)
 	}
-	m.Id = metric.ID
+	m.SetId(metric.ID)
 	return &m
 }
 
 func toIn(metric *proto.Metric) *models.Metric {
 	var m models.Metric
-	switch metric.Type {
+	switch metric.GetType() {
 	case proto.MetricType_COUNTER:
 		m.Type = models.CounterType
-		m.Delta = metric.Delta
+		m.Delta = metric.GetDelta()
 	case proto.MetricType_GAUGE:
 		m.Type = models.GaugeType
-		m.Value = metric.Value
+		m.Value = metric.GetValue()
 	}
-	m.ID = metric.Id
+	m.ID = metric.GetId()
 	return &m
 }

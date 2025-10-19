@@ -25,9 +25,9 @@ type HTTPMetricClient struct {
 	addr   string
 }
 
-type RequestHandler func(transport http.RoundTripper) http.RoundTripper
+type RequestHandlerFactory func(transport http.RoundTripper) http.RoundTripper
 
-func NewClient(addr string, transports ...RequestHandler) *HTTPMetricClient {
+func NewClient(addr string, transports ...RequestHandlerFactory) *HTTPMetricClient {
 	var transport http.RoundTripper
 	defaultTransport := &http.Transport{}
 	transport = defaultTransport

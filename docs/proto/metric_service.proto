@@ -1,9 +1,12 @@
-syntax = "proto3";
+edition = "2023";
 package go_metric;
 
-option go_package = "metric/proto";
+option go_package = "/proto";
 
-import "metric.proto";
+import "docs/proto/metric.proto";
+import "google/protobuf/go_features.proto";
+option features.(pb.go).api_level = API_OPAQUE;
+
 
 message GetMetric {
   MetricType type = 1;

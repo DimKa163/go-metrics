@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func UseCryptoHandler(encrypter *crypto.Encrypter) RequestHandler {
+func UseCryptoHandler(encrypter *crypto.Encrypter) RequestHandlerFactory {
 	return func(transport http.RoundTripper) http.RoundTripper {
 		return NewCryptoTripper(transport, encrypter)
 	}

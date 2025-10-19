@@ -8,7 +8,7 @@ import (
 	"github.com/cenkalti/backoff/v5"
 )
 
-func UseRetryHandler() RequestHandler {
+func UseRetryHandler() RequestHandlerFactory {
 	return func(transport http.RoundTripper) http.RoundTripper {
 		return NewRetryRoundTripper(transport)
 	}

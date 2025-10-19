@@ -1,42 +1,28 @@
 package hclient
 
 import (
-	"net"
 	"net/http"
 )
 
-var ipAddr string
-
-func init() {
-	ipAddr, _ = getLocalIP()
-}
-func getLocalIP() (string, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		return "", err
-	}
-	defer conn.Close()
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP.String(), nil
-}
-func UseIdentifyHandler() RequestHandler {
+func UseIdentifyHandler(ip string) RequestHandlerFactory {
 	return func(transport http.RoundTripper) http.RoundTripper {
-		return NewIdentifyTripper(transport)
+		return NewIdentifyTripper(transport, ip)
 	}
 }
 
 type IdentifyTripper struct {
 	rt http.RoundTripper
+	ip string
 }
 
-func NewIdentifyTripper(rt http.RoundTripper) *IdentifyTripper {
-	return &IdentifyTripper{rt: rt}
+func NewIdentifyTripper(rt http.RoundTripper, ip string) *IdentifyTripper {
+	return &IdentifyTripper{rt: rt, ip: ip}
 }
 
 func (t *IdentifyTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set(
 		"X-Real-IP",
-		ipAddr,
+		t.ip,
 	)
 	return t.rt.RoundTrip(req)
 }

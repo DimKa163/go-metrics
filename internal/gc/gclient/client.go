@@ -13,45 +13,45 @@ type GrpcMetricClient struct {
 }
 
 func (g *GrpcMetricClient) UpdateGauge(ctx context.Context, name string, value float64) error {
-	_, err := g.Update(ctx, &proto.UpdateMetric{
-		Metric: &proto.Metric{
-			Id:    name,
-			Type:  proto.MetricType_GAUGE,
-			Value: value,
-		},
-	})
+	var metricRequest proto.UpdateMetric
+	var metric proto.Metric
+	metric.SetId(name)
+	metric.SetType(proto.MetricType_GAUGE)
+	metric.SetValue(value)
+	metricRequest.SetMetric(&metric)
+	_, err := g.Update(ctx, &metricRequest)
 	return err
 }
 
 func (g *GrpcMetricClient) UpdateCounter(ctx context.Context, name string, value int64) error {
-	_, err := g.Update(ctx, &proto.UpdateMetric{
-		Metric: &proto.Metric{
-			Id:    name,
-			Type:  proto.MetricType_COUNTER,
-			Delta: value,
-		},
-	})
+	var metricRequest proto.UpdateMetric
+	var metric proto.Metric
+	metric.SetId(name)
+	metric.SetType(proto.MetricType_COUNTER)
+	metric.SetDelta(value)
+	metricRequest.SetMetric(&metric)
+	_, err := g.Update(ctx, &metricRequest)
 	return err
 }
 
-func (g *GrpcMetricClient) BatchUpdate(ctx context.Context, metric []*contracts.Metric) error {
-	in := make([]*proto.Metric, len(metric))
-	for i, m := range metric {
-		in[i] = &proto.Metric{
-			Id: m.ID,
-		}
+func (g *GrpcMetricClient) BatchUpdate(ctx context.Context, metrics []*contracts.Metric) error {
+	var metricRequest proto.BatchUpdateMetric
+	in := make([]*proto.Metric, len(metrics))
+	for i, m := range metrics {
+		var metric proto.Metric
+		in[i] = &metric
+		metric.SetId(m.ID)
 		switch m.Type {
 		case models.GaugeType:
-			in[i].Type = proto.MetricType_GAUGE
-			in[i].Value = m.Value
+			metric.SetType(proto.MetricType_GAUGE)
+			metric.SetValue(m.Value)
 		case models.CounterType:
-			in[i].Type = proto.MetricType_COUNTER
-			in[i].Delta = m.Delta
+			metric.SetType(proto.MetricType_COUNTER)
+			metric.SetDelta(m.Delta)
 		}
 	}
-	_, err := g.MetricsClient.BatchUpdate(ctx, &proto.BatchUpdateMetric{
-		Metric: in,
-	})
+	metricRequest.SetMetric(in)
+	_, err := g.MetricsClient.BatchUpdate(ctx, &metricRequest)
 	return err
 }
 

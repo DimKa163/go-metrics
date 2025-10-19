@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.33.0
-// source: metric_service.proto
+// source: docs/proto/metric_service.proto
 
 package proto
 
@@ -71,7 +71,7 @@ func (c *metricsClient) BatchUpdate(ctx context.Context, in *BatchUpdateMetric, 
 	return out, nil
 }
 
-// MetricsServer is the gserver API for Metrics service.
+// MetricsServer is the server API for Metrics service.
 // All implementations must embed UnimplementedMetricsServer
 // for forward compatibility.
 type MetricsServer interface {
@@ -193,5 +193,5 @@ var Metrics_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "metric_service.proto",
+	Metadata: "docs/proto/metric_service.proto",
 }
