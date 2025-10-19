@@ -28,11 +28,11 @@ type Collector struct {
 }
 
 func NewCollector(conf *Config) (*Collector, error) {
-	client, err := CreateClient(conf)
+	cl, err := CreateClient(conf)
 	if err != nil {
 		return nil, err
 	}
-	return &Collector{Config: conf, MetricClient: client}, nil
+	return &Collector{Config: conf, MetricClient: cl}, nil
 }
 
 // Run worker
@@ -115,7 +115,10 @@ func ifNan(value string) string {
 
 func CreateClient(conf *Config) (client.MetricClient, error) {
 	if conf.UseGrpc {
-		return CreateGRPCMetricClient(conf.Addr, gclient.UnaryLoggingInterceptor(), gclient.UnaryIdentifyInterceptor())
+		return CreateGRPCMetricClient(conf.Addr,
+			gclient.UnaryRetryInterceptor(),
+			gclient.UnaryLoggingInterceptor(),
+			gclient.UnaryIdentifyInterceptor())
 	}
 
 	tripperFc := []hclient.RequestHandler{
