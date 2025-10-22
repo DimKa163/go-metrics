@@ -9,4 +9,6 @@ type Config struct {
 	DatabaseDSN        string `arg:"d" envArg:"DATABASE_DSN" json:"database_dsn"`
 	Key                string `arg:"k" envArg:"KEY" json:"key"`
 	PrivateKeyFilePath string `arg:"c" envArg:"CRYPTO_KEY" json:"crypto_key"`
+	TrustedSubnet      string `arg:"t" envArg:"TRUSTED_SUBNET" json:"trusted_subnet"`
+	GRPCAddr           string `arg:"ga" envArg:"GRPC_ADDRESS" json:"grpc_address"`
 }

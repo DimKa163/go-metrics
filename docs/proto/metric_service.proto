@@ -1,0 +1,38 @@
+edition = "2023";
+package go_metric;
+
+option go_package = "/proto";
+
+import "docs/proto/metric.proto";
+import "google/protobuf/go_features.proto";
+option features.(pb.go).api_level = API_OPAQUE;
+
+
+message GetMetric {
+  MetricType type = 1;
+  string name = 2;
+}
+
+message UpdateMetric {
+  Metric metric = 1;
+}
+
+message MetricResponse {
+  Metric metric = 1;
+  string error = 2;
+}
+
+message BatchUpdateMetric {
+  repeated Metric metric = 1;
+}
+
+message BatchUpdateMetricResponse {
+  string error = 1;
+}
+
+service Metrics {
+
+  rpc Get(GetMetric) returns (MetricResponse);
+  rpc Update(UpdateMetric) returns (MetricResponse);
+  rpc BatchUpdate(BatchUpdateMetric) returns(BatchUpdateMetricResponse);
+}

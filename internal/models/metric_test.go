@@ -6,14 +6,18 @@ import (
 	"testing"
 )
 
+var defInt64 int64
+var defFloat64 float64
+
 func TestCreateGauge(t *testing.T) {
+
 	val := 42.5
 	m := CreateGauge("gauge_metric", val)
 
 	assert.NotNil(t, m)
 	assert.Equal(t, "gauge_metric", m.ID)
-	assert.Equal(t, val, *m.Value)
-	assert.Nil(t, m.Delta)
+	assert.Equal(t, val, m.Value)
+	assert.Equal(t, defInt64, m.Delta)
 }
 
 func TestCreateCounter(t *testing.T) {
@@ -21,8 +25,8 @@ func TestCreateCounter(t *testing.T) {
 	m := CreateCounter("counter_metric", val)
 	assert.NotNil(t, m)
 	assert.Equal(t, "counter_metric", m.ID)
-	assert.Equal(t, val, *m.Delta)
-	assert.Nil(t, m.Value)
+	assert.Equal(t, val, m.Delta)
+	assert.Equal(t, defFloat64, m.Value)
 }
 
 func TestUpdateGauge(t *testing.T) {
@@ -30,21 +34,21 @@ func TestUpdateGauge(t *testing.T) {
 
 	m1 := CreateGauge("gauge_metric", 55.6)
 
-	m.Update(*m1)
+	m.Update(m1)
 
 	assert.Equal(t, "gauge_metric", m.ID)
-	assert.Equal(t, 55.6, *m.Value)
-	assert.Nil(t, m.Delta)
+	assert.Equal(t, 55.6, m.Value)
+	assert.Equal(t, defInt64, m.Delta)
 }
 
 func TestUpdateCounter(t *testing.T) {
 	m := CreateCounter("counter_metric", 42)
 
 	m1 := CreateCounter("counter_metric", 10)
-	m.Update(*m1)
+	m.Update(m1)
 	assert.Equal(t, "counter_metric", m.ID)
-	assert.Equal(t, int64(52), *m.Delta)
-	assert.Nil(t, m.Value)
+	assert.Equal(t, int64(52), m.Delta)
+	assert.Equal(t, defFloat64, m.Value)
 }
 
 func TestSuccessCreateCounterMetric(t *testing.T) {
@@ -54,7 +58,7 @@ func TestSuccessCreateCounterMetric(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEqual(t, Metric{}, m)
 	assert.Equal(t, "Counter", m.ID)
-	assert.Equal(t, val, *m.Delta)
+	assert.Equal(t, val, m.Delta)
 
 }
 
@@ -74,7 +78,7 @@ func TestSuccessCreateGaugeMetric(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEqual(t, Metric{}, m)
 	assert.Equal(t, "Gauge", m.ID)
-	assert.Equal(t, val, *m.Value)
+	assert.Equal(t, val, m.Value)
 }
 
 func TestValidateMetric(t *testing.T) {

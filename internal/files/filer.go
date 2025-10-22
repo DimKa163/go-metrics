@@ -39,7 +39,7 @@ func (f *Filer) Restore() ([]models.Metric, error) {
 	return metrics, nil
 }
 
-func (f *Filer) Dump(metrics []models.Metric) error {
+func (f *Filer) Dump(metrics []*models.Metric) error {
 	file, err := f.openFile(os.O_CREATE | os.O_WRONLY | os.O_TRUNC)
 	if err != nil {
 		return err

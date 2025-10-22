@@ -5,14 +5,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/DimKa163/go-metrics/internal/crypto"
-	"net/http"
+	"github.com/DimKa163/go-metrics/internal/gc/gclient"
+	"github.com/DimKa163/go-metrics/internal/mhttp/contracts"
+	"github.com/DimKa163/go-metrics/internal/mhttp/hclient"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"net"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/DimKa163/go-metrics/internal/client"
-	"github.com/DimKa163/go-metrics/internal/client/tripper"
 	"github.com/DimKa163/go-metrics/internal/models"
 	"github.com/DimKa163/go-metrics/internal/runtime"
 )
@@ -21,34 +25,15 @@ type Collector struct {
 	*Config
 	wg sync.WaitGroup
 	client.MetricClient
-	jobs chan *models.Metric
+	jobs chan *contracts.Metric
 }
 
 func NewCollector(conf *Config) (*Collector, error) {
-	tripperFc := []func(transport http.RoundTripper) http.RoundTripper{
-		func(transport http.RoundTripper) http.RoundTripper {
-			return tripper.NewRetryRoundTripper(transport)
-		},
-		func(transport http.RoundTripper) http.RoundTripper {
-			return tripper.NewGzip(transport)
-		},
+	cl, err := CreateClient(conf)
+	if err != nil {
+		return nil, err
 	}
-	if conf.Key != "" {
-		tripperFc = append(tripperFc, func(transport http.RoundTripper) http.RoundTripper {
-			return tripper.NewHashTripper(transport, conf.Key)
-		})
-	}
-
-	if conf.PublicKeyFilePath != "" {
-		encrypter, err := crypto.NewEncrypter(conf.PublicKeyFilePath)
-		if err != nil {
-			return nil, err
-		}
-		tripperFc = append(tripperFc, func(transport http.RoundTripper) http.RoundTripper {
-			return tripper.NewCryptoTripper(transport, encrypter)
-		})
-	}
-	return &Collector{Config: conf, MetricClient: client.NewClient(fmt.Sprintf("http://%s", conf.Addr), tripperFc)}, nil
+	return &Collector{Config: conf, MetricClient: cl}, nil
 }
 
 // Run worker
@@ -57,10 +42,10 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 	defer cancel()
 	var count int64
 	values := make(map[string]float64)
-	c.jobs = make(chan *models.Metric, c.Limit*4)
+	c.jobs = make(chan *contracts.Metric, c.Limit*4)
 	var err error
 	for i := 0; i < c.Limit; i++ {
-		go c.worker()
+		go c.worker(ctx)
 	}
 	pollTicker := time.NewTicker(time.Duration(c.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(c.ReportInterval) * time.Second)
@@ -86,28 +71,28 @@ func (c *Collector) Run(buildVersion string, buildDate string, buildCommit strin
 		case <-reportTicker.C:
 			for k, v := range values {
 				c.wg.Add(1)
-				c.jobs <- models.CreateGauge(k, v)
+				c.jobs <- contracts.CreateGauge(k, v)
 			}
 			c.wg.Add(1)
-			c.jobs <- models.CreateCounter("PollCount", count)
+			c.jobs <- contracts.CreateCounter("PollCount", count)
 
 		}
 	}
 }
 
-func (c *Collector) worker() {
+func (c *Collector) worker(ctx context.Context) {
 	for metric := range c.jobs {
 		if metric == nil {
 			continue
 		}
 		fmt.Println(metric)
 		if metric.Type == models.CounterType {
-			if err := c.UpdateCounter(metric.ID, *metric.Delta); err != nil {
+			if err := c.UpdateCounter(ctx, metric.ID, metric.Delta); err != nil {
 				fmt.Println(err)
 				continue
 			}
 		} else if metric.Type == models.GaugeType {
-			if err := c.UpdateGauge(metric.ID, *metric.Value); err != nil {
+			if err := c.UpdateGauge(ctx, metric.ID, metric.Value); err != nil {
 				fmt.Println(err)
 				continue
 			}
@@ -127,4 +112,59 @@ func ifNan(value string) string {
 		return "N/A"
 	}
 	return value
+}
+
+func CreateClient(conf *Config) (client.MetricClient, error) {
+	ip, err := getLocalIP()
+	if err != nil {
+		return nil, err
+	}
+	if conf.UseGrpc {
+		return CreateGRPCMetricClient(conf.Addr,
+			gclient.UnaryRetryInterceptor(),
+			gclient.UnaryLoggingInterceptor(),
+			gclient.UnaryIdentifyInterceptor(ip))
+	}
+
+	tripperFc := []hclient.RequestHandlerFactory{
+		hclient.UseRetryHandler(),
+		hclient.UseGzipHandler(),
+		hclient.UseIdentifyHandler(ip),
+	}
+	if conf.Key != "" {
+		tripperFc = append(tripperFc, hclient.UseHashHandler(conf.Key))
+	}
+
+	if conf.PublicKeyFilePath != "" {
+		encrypter, err := crypto.NewEncrypter(conf.PublicKeyFilePath)
+		if err != nil {
+			return nil, err
+		}
+		tripperFc = append(tripperFc, hclient.UseCryptoHandler(encrypter))
+	}
+	return CreateHTTPMetricClient(hclient.HTTP, conf.Addr, tripperFc...), nil
+}
+
+func CreateGRPCMetricClient(addr string, interceptors ...grpc.UnaryClientInterceptor) (*gclient.GrpcMetricClient, error) {
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(interceptors...))
+	if err != nil {
+		return nil, err
+	}
+	return gclient.NewGRPCMetricClient(conn), nil
+}
+
+func CreateHTTPMetricClient(protocol, addr string, handlers ...hclient.RequestHandlerFactory) *hclient.HTTPMetricClient {
+	return hclient.NewClient(fmt.Sprintf("%s://%s", protocol, addr), handlers...)
+}
+
+func getLocalIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
 }

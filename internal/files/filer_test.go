@@ -16,11 +16,11 @@ func TestDumpAndRestore(t *testing.T) {
 
 	// данные для дампа
 	delta := int64(54)
-	metrics := []models.Metric{
-		models.Metric{
+	metrics := []*models.Metric{
+		{
 			ID:    "TestCounter",
 			Type:  models.CounterType,
-			Delta: &delta,
+			Delta: delta,
 		},
 	}
 
@@ -59,11 +59,11 @@ func TestDump_Overwrite(t *testing.T) {
 	f := NewFiler(filePath, attempts)
 
 	delta := int64(54)
-	metrics := []models.Metric{
-		models.Metric{
+	metrics := []*models.Metric{
+		{
 			ID:    "TestCounter",
 			Type:  models.CounterType,
-			Delta: &delta,
+			Delta: delta,
 		},
 	}
 
@@ -73,11 +73,11 @@ func TestDump_Overwrite(t *testing.T) {
 	}
 
 	value := float64(54.3)
-	metrics = []models.Metric{
-		models.Metric{
+	metrics = []*models.Metric{
+		{
 			ID:    "TestCounter",
 			Type:  models.GaugeType,
-			Value: &value,
+			Value: value,
 		},
 	}
 

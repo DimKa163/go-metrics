@@ -57,7 +57,7 @@ func (m *metrics) Map(engine *gin.Engine) {
 // @Param metric body contracts.Metric true "metric"
 // @Success 200 {object} contracts.Metric "success request"
 // @Failure 400 {object} contracts.ErrorModel "bad request"
-// @Failure 500 {object} contracts.ErrorModel "internal server error"
+// @Failure 500 {object} contracts.ErrorModel "internal gserver error"
 // @Router /value [post]
 func (m *metrics) GetJSON(context *gin.Context) {
 	var model contracts.Metric
@@ -90,7 +90,7 @@ func (m *metrics) GetJSON(context *gin.Context) {
 // @Produce text/html
 // @Success 200 {string} []contracts.MetricView "success request"
 // @Failure 400 {object} contracts.ErrorModel "bad request"
-// @Failure 500 {object} contracts.ErrorModel "internal server error"
+// @Failure 500 {object} contracts.ErrorModel "internal gserver error"
 // @Router / [get]
 func (m *metrics) Home(context *gin.Context) {
 	met, err := m.service.GetAll(context)
@@ -124,7 +124,7 @@ func (m *metrics) Home(context *gin.Context) {
 // @Param metrics body []contracts.Metric true "metric array"
 // @Success 200 {string} string "success request"
 // @Failure 400 {object} contracts.ErrorModel "bad request"
-// @Failure 500 {object} contracts.ErrorModel "internal server error"
+// @Failure 500 {object} contracts.ErrorModel "internal gserver error"
 // @Router /updates [post]
 func (m *metrics) UpdatesJSON(context *gin.Context) {
 	var metricList []contracts.Metric
@@ -132,7 +132,7 @@ func (m *metrics) UpdatesJSON(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, contracts.ErrorModel{Error: err.Error()})
 		return
 	}
-	data := make([]models.Metric, len(metricList))
+	data := make([]*models.Metric, len(metricList))
 	for i, metric := range metricList {
 		metricIt := models.Metric{
 			ID:    metric.ID,
@@ -144,7 +144,7 @@ func (m *metrics) UpdatesJSON(context *gin.Context) {
 			context.JSON(http.StatusBadRequest, contracts.ErrorModel{Error: err.Error()})
 			return
 		}
-		data[i] = metricIt
+		data[i] = &metricIt
 	}
 	if err := m.service.BatchUpdate(context, data); err != nil {
 		context.JSON(http.StatusInternalServerError, contracts.ErrorModel{Error: err.Error()})
@@ -158,7 +158,7 @@ func (m *metrics) UpdatesJSON(context *gin.Context) {
 // @Produce application/json
 // @Param metric body contracts.Metric true "metric"
 // @Failure 400 {object} contracts.ErrorModel "bad request"
-// @Failure 500 {object} contracts.ErrorModel "internal server error"
+// @Failure 500 {object} contracts.ErrorModel "internal gserver error"
 // @Router /update [post]
 func (m *metrics) UpdateJSON(context *gin.Context) {
 	var contract contracts.Metric
@@ -176,7 +176,7 @@ func (m *metrics) UpdateJSON(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, contracts.ErrorModel{Error: err.Error()})
 		return
 	}
-	result, err := m.service.Upsert(context, metric)
+	result, err := m.service.Upsert(context, &metric)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, contracts.ErrorModel{Error: err.Error()})
 		return
@@ -190,7 +190,7 @@ func (m *metrics) UpdateJSON(context *gin.Context) {
 // @Produce plain/text
 // @Produce json
 // @Failure 400 {object} contracts.ErrorModel "bad request"
-// @Failure 500 {object} contracts.ErrorModel "internal server error"
+// @Failure 500 {object} contracts.ErrorModel "internal gserver error"
 // @Param type path string true "Metric type"
 // @Param name path string true "Metric name"
 // @Param value path string true "Metric value"
@@ -204,7 +204,7 @@ func (m *metrics) Update(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, err = m.service.Upsert(context, metric)
+	_, err = m.service.Upsert(context, &metric)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, contracts.ErrorModel{Error: err.Error()})
 		return

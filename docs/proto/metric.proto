@@ -1,0 +1,22 @@
+edition = "2023";
+package go_metric;
+
+
+option go_package = "/proto";
+
+import "google/protobuf/go_features.proto";
+option features.(pb.go).api_level = API_OPAQUE;
+
+message Metric {
+  string id = 1;
+
+  MetricType type = 2;
+  double value = 3;
+  int64 delta = 4;
+}
+
+enum MetricType {
+  UNRECOGNIZED  = 0;
+  GAUGE = 1;
+  COUNTER = 2;
+}

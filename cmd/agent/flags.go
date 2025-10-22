@@ -6,7 +6,7 @@ import (
 )
 
 func ParseFlags(config *collector.Config) {
-	environment.BindStringArg("a", "localhost:8080", "keeper address")
+	environment.BindStringArg("a", "localhost:8082", "keeper address")
 	environment.BindStringEnv("ADDRESS")
 	environment.BindIntArg("r", 10, "report interval in seconds")
 	environment.BindIntEnv("REPORT_INTERVAL")
@@ -20,5 +20,7 @@ func ParseFlags(config *collector.Config) {
 	environment.BindStringEnv("CONFIG")
 	environment.BindStringArg("crypto-key", "", "crypto key")
 	environment.BindStringEnv("CRYPTO_KEY")
+	environment.BindBooleanArg("ga", false, "grpc address")
+	environment.BindBooleanEnv("USE_GRPC")
 	environment.Parse(config)
 }

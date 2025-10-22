@@ -8,9 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
-
 	models "github.com/DimKa163/go-metrics/internal/models"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockRepository is a mock of Repository interface.
@@ -37,7 +36,7 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // BatchUpsert mocks base method.
-func (m *MockRepository) BatchUpsert(ctx context.Context, metrics []models.Metric) error {
+func (m *MockRepository) BatchUpsert(ctx context.Context, metrics []*models.Metric) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BatchUpsert", ctx, metrics)
 	ret0, _ := ret[0].(error)
@@ -66,10 +65,10 @@ func (mr *MockRepositoryMockRecorder) Find(ctx, key interface{}) *gomock.Call {
 }
 
 // GetAll mocks base method.
-func (m *MockRepository) GetAll(ctx context.Context) ([]models.Metric, error) {
+func (m *MockRepository) GetAll(ctx context.Context) ([]*models.Metric, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAll", ctx)
-	ret0, _ := ret[0].([]models.Metric)
+	ret0, _ := ret[0].([]*models.Metric)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

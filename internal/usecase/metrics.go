@@ -21,39 +21,39 @@ func NewMetricService(repository persistence.Repository) *MetricService {
 }
 
 // Get get metric
-func (ms *MetricService) Get(ctx context.Context, id string) (models.Metric, error) {
+func (ms *MetricService) Get(ctx context.Context, id string) (*models.Metric, error) {
 	model, err := ms.repository.Find(ctx, id)
 	if err != nil {
 		if errors.Is(err, persistence.ErrMetricNotFound) {
-			return models.Metric{}, ErrMetricNotFound
+			return nil, ErrMetricNotFound
 		}
-		return models.Metric{}, fmt.Errorf("db unhandled error %w", err)
+		return nil, fmt.Errorf("db unhandled error %w", err)
 	}
-	return *model, nil
+	return model, nil
 }
 
 // GetAll get all metric
-func (ms *MetricService) GetAll(ctx context.Context) ([]models.Metric, error) {
+func (ms *MetricService) GetAll(ctx context.Context) ([]*models.Metric, error) {
 	return ms.repository.GetAll(ctx)
 }
 
 // Upsert create/update metric
-func (ms *MetricService) Upsert(ctx context.Context, newMetric models.Metric) (models.Metric, error) {
+func (ms *MetricService) Upsert(ctx context.Context, newMetric *models.Metric) (*models.Metric, error) {
 	m, err := ms.processMetric(ctx, newMetric)
 	if err != nil {
-		return models.Metric{}, err
+		return nil, err
 	}
-	err = ms.repository.Upsert(ctx, &m)
+	err = ms.repository.Upsert(ctx, m)
 	if err != nil {
-		return models.Metric{}, fmt.Errorf("db unhandled error %w", err)
+		return nil, fmt.Errorf("db unhandled error %w", err)
 	}
 	return m, nil
 }
 
 // BatchUpdate create/update metrics
-func (ms *MetricService) BatchUpdate(ctx context.Context, metricList []models.Metric) error {
+func (ms *MetricService) BatchUpdate(ctx context.Context, metricList []*models.Metric) error {
 	var err error
-	mapMetric := make(map[string]models.Metric)
+	mapMetric := make(map[string]*models.Metric)
 	for _, metric := range metricList {
 		it, ok := mapMetric[metric.ID]
 		if ok {
@@ -61,15 +61,15 @@ func (ms *MetricService) BatchUpdate(ctx context.Context, metricList []models.Me
 			case models.GaugeType:
 				mapMetric[metric.ID] = metric
 			case models.CounterType:
-				*it.Delta = *metric.Delta + *it.Delta
+				it.Delta = metric.Delta + it.Delta
 				mapMetric[metric.ID] = it
 			}
 			continue
 		}
 		mapMetric[metric.ID] = metric
 	}
-	resultList := make([]models.Metric, 0)
-	var m models.Metric
+	resultList := make([]*models.Metric, 0)
+	var m *models.Metric
 	for _, metric := range mapMetric {
 		m, err = ms.processMetric(ctx, metric)
 		if err != nil {
@@ -83,17 +83,17 @@ func (ms *MetricService) BatchUpdate(ctx context.Context, metricList []models.Me
 	return nil
 }
 
-func (ms *MetricService) processMetric(ctx context.Context, metric models.Metric) (models.Metric, error) {
+func (ms *MetricService) processMetric(ctx context.Context, metric *models.Metric) (*models.Metric, error) {
 	m, err := ms.repository.Find(ctx, metric.ID)
 	if err != nil && !errors.Is(err, persistence.ErrMetricNotFound) {
-		return models.Metric{}, fmt.Errorf("db unhandled error %w", err)
+		return nil, fmt.Errorf("db unhandled error %w", err)
 	}
 	if m == nil {
 		logging.Log.Info("metric not found. adding new metric")
-		m = &metric
+		m = metric
 	} else {
 		logging.Log.Info("metric found. updating metric")
 		m.Update(metric)
 	}
-	return *m, nil
+	return m, nil
 }

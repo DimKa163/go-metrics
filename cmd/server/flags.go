@@ -24,6 +24,10 @@ func ParseFlags(config *keeper.Config) error {
 	environment.BindStringEnv("CONFIG")
 	environment.BindStringArg("crypto-key", "", "crypto key")
 	environment.BindStringEnv("CRYPTO_KEY")
+	environment.BindStringArg("t", "", "trusted subnet")
+	environment.BindStringEnv("TRUSTED_SUBNET")
+	environment.BindStringArg("ga", ":8082", "grpc address")
+	environment.BindStringEnv("GRPC_ADDRESS")
 	environment.Parse(config)
 	return nil
 }
